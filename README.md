@@ -70,8 +70,6 @@ docker-compose down
 docker-compose down -v
 ```
 
-## 現在の実装状況（Phase 1 完了）
-
 - ✅ Docker環境が完全に動作
 - ✅ フロントエンド（React）とバックエンド（Hono）が通信可能
 - ✅ SQLiteデータベースが作成され、基本テーブル（users, books）が存在
