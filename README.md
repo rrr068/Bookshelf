@@ -21,7 +21,7 @@
 
 ## 開発フェーズ
 
-- [ ] Phase 1: 環境構築 + クリーンアーキテクチャの基礎
+- [x] Phase 1: 環境構築 + クリーンアーキテクチャの基礎
 - [ ] Phase 2: ユーザー認証機能
 - [ ] Phase 3: 書籍管理機能
 - [ ] Phase 4: 読書ステータス管理
@@ -59,9 +59,30 @@ docker-compose up -d
 # ログ確認
 docker-compose logs -f
 
+# 特定のサービスのログ確認
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
 # 停止
 docker-compose down
+
+# データベースを含めて完全削除
+docker-compose down -v
 ```
+
+## 現在の実装状況（Phase 1 完了）
+
+- ✅ Docker環境が完全に動作
+- ✅ フロントエンド（React）とバックエンド（Hono）が通信可能
+- ✅ SQLiteデータベースが作成され、基本テーブル（users, books）が存在
+- ✅ クリーンアーキテクチャのディレクトリ構造が確立
+- ✅ ホットリロードが機能
+- ✅ 環境変数で設定を管理
+
+### アクセス方法
+
+- フロントエンド: http://localhost:5173
+- バックエンドヘルスチェック: http://localhost:3000/health
 
 ## ライセンス
 
