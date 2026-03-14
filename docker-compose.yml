@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bookshelf-backend
+    environment:
+      NODE_ENV: development
+      DATABASE_PATH: /app/data/bookshelf.db
+      JWT_SECRET: your-secret-key-change-in-production
+      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - sqlite_data:/app/data
+    networks:
+      - bookshelf-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bookshelf-frontend
+    environment:
+      VITE_API_URL: http://localhost:3000/api
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - bookshelf-network
+
+volumes:
+  sqlite_data:
+
+networks:
+  bookshelf-network:
+    driver: bridge
