@@ -7,6 +7,7 @@ import { BookCard } from '@/components/BookCard';
 import { Book, BookCategories, BookCategory } from '@/types/book';
 import { searchBooks, searchBooksByCategory, getFeaturedBooks } from '@/services/bookService';
 import { toggleBookLike } from '@/services/bookLikeService';
+import { getBooksMetadata } from '@/services/bookMetadataService';
 
 /**
  * 本の一覧ページ（Filmarksライクなデザイン）
@@ -35,7 +36,23 @@ export function BooksPage() {
       const result = selectedCategory === '全て'
         ? await getFeaturedBooks(40)
         : await searchBooksByCategory(selectedCategory, 40);
-      setBooks(result);
+
+      // 本のメタデータ（平均評価、いいね数）を取得
+      const googleBooksIds = result.map(book => book.googleBooksId);
+      const metadata = await getBooksMetadata(googleBooksIds);
+
+      // メタデータを本のデータにマージ
+      const booksWithMetadata = result.map(book => {
+        const meta = metadata.find(m => m.googleBooksId === book.googleBooksId);
+        return {
+          ...book,
+          averageRating: meta?.averageRating || undefined,
+          likesCount: meta?.likesCount || 0,
+          isLikedByCurrentUser: meta?.isLikedByCurrentUser || false,
+        };
+      });
+
+      setBooks(booksWithMetadata);
     } catch (error) {
       console.error('Failed to load books:', error);
     } finally {
@@ -53,7 +70,23 @@ export function BooksPage() {
     setLoading(true);
     try {
       const result = await searchBooks(searchQuery, 40);
-      setBooks(result);
+
+      // 本のメタデータ（平均評価、いいね数）を取得
+      const googleBooksIds = result.map(book => book.googleBooksId);
+      const metadata = await getBooksMetadata(googleBooksIds);
+
+      // メタデータを本のデータにマージ
+      const booksWithMetadata = result.map(book => {
+        const meta = metadata.find(m => m.googleBooksId === book.googleBooksId);
+        return {
+          ...book,
+          averageRating: meta?.averageRating || undefined,
+          likesCount: meta?.likesCount || 0,
+          isLikedByCurrentUser: meta?.isLikedByCurrentUser || false,
+        };
+      });
+
+      setBooks(booksWithMetadata);
       setSelectedCategory('全て');
     } catch (error) {
       console.error('Failed to search books:', error);

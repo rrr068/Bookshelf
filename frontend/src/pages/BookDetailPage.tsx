@@ -5,9 +5,10 @@ import { Review } from '@/types/review';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { createReview, toggleLike } from '@/services/reviewService';
+import { createReview, updateReview, deleteReview, toggleLike, getBookReviews } from '@/services/reviewService';
 import { updateReadingStatus, getReadingStatus } from '@/services/readingStatusService';
 import { ReadingStatus, ReadingStatusLabel } from '@/types/readingStatus';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * 本の詳細ページ
@@ -16,6 +17,7 @@ import { ReadingStatus, ReadingStatusLabel } from '@/types/readingStatus';
 export function BookDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   // location.stateから本のデータを取得
   const book = (location.state as { book?: Book })?.book || null;
@@ -26,13 +28,15 @@ export function BookDetailPage() {
   const [loading, setLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ReadingStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
+  const [hasReview, setHasReview] = useState(false);
 
   /**
-   * ページ読み込み時に読書ステータスを取得
+   * ページ読み込み時に読書ステータスとレビューを取得
    */
   useEffect(() => {
     if (book) {
       loadReadingStatus();
+      loadReviews();
     }
   }, [book]);
 
@@ -53,38 +57,112 @@ export function BookDetailPage() {
   };
 
   /**
-   * レビュー投稿
+   * レビュー一覧を読み込む
    */
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const loadReviews = async () => {
+    if (!book || !user) return;
+
+    try {
+      const bookReviews = await getBookReviews(book.googleBooksId);
+      setReviews(bookReviews);
+
+      // 自分のレビューがあるかチェック
+      const myReview = bookReviews.find(r => r.userId === user.id);
+      if (myReview) {
+        setHasReview(true);
+        setRating(myReview.rating);
+        setComment(myReview.comment || '');
+      }
+    } catch (error) {
+      console.error('Failed to load reviews:', error);
+    }
+  };
+
+  /**
+   * レビュー投稿または更新
+   */
+  const submitReview = async (ratingValue?: number) => {
     if (!book) return;
 
     setLoading(true);
     try {
-      const newReview = await createReview({
-        bookId: book.googleBooksId,
-        rating: rating || undefined,
-        comment: comment || undefined,
-        bookData: {
-          googleBooksId: book.googleBooksId,
-          title: book.title,
-          authors: book.authors,
-          publisher: book.publisher,
-          publishedDate: book.publishedDate,
-          description: book.description,
-          isbn10: book.isbn10,
-          isbn13: book.isbn13,
-          pageCount: book.pageCount,
-          thumbnailUrl: book.thumbnailUrl,
-          language: book.language,
-        },
-      });
+      if (hasReview) {
+        // 既存レビューを更新
+        await updateReview(book.googleBooksId, {
+          rating: ratingValue || undefined,
+          comment: comment || undefined,
+        });
+      } else {
+        // 新規レビューを作成
+        await createReview({
+          bookId: book.googleBooksId,
+          rating: ratingValue || undefined,
+          comment: comment || undefined,
+          bookData: {
+            googleBooksId: book.googleBooksId,
+            title: book.title,
+            authors: book.authors,
+            publisher: book.publisher,
+            publishedDate: book.publishedDate,
+            description: book.description,
+            isbn10: book.isbn10,
+            isbn13: book.isbn13,
+            pageCount: book.pageCount,
+            thumbnailUrl: book.thumbnailUrl,
+            language: book.language,
+          },
+        });
+        setHasReview(true);
+      }
 
-      setReviews([newReview, ...reviews]);
-      setComment('');
-      alert('レビューを投稿しました！');
+      // レビュー一覧を再読み込み
+      await loadReviews();
+
+      setRating(ratingValue || null);
     } catch (error: any) {
       alert(error.message || 'レビューの投稿に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * レビューフォーム送信（感想のみ）
+   */
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitReview(rating || undefined);
+  };
+
+  /**
+   * 星をクリックした時点でレビューを投稿/更新
+   */
+  const handleRatingClick = async (star: number) => {
+    setRating(star);
+    await submitReview(star);
+  };
+
+  /**
+   * 評価をクリア（レビューを削除）
+   */
+  const handleClearRating = async () => {
+    if (!book) return;
+    if (!hasReview) {
+      setRating(null);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await deleteReview(book.googleBooksId);
+      setRating(null);
+      setComment('');
+      setHasReview(false);
+
+      // レビュー一覧を再読み込み
+      await loadReviews();
+    } catch (error: any) {
+      alert(error.message || '評価のクリアに失敗しました');
     } finally {
       setLoading(false);
     }
@@ -245,16 +323,17 @@ export function BookDetailPage() {
               <CardContent>
                 <form onSubmit={handleSubmitReview} className="space-y-4">
                   <div>
-                    <Label htmlFor="rating">評価（任意）</Label>
+                    <Label htmlFor="rating">評価（星をクリックで即座に確定）</Label>
                     <div className="flex gap-2 mt-2 items-center">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
                           type="button"
-                          onClick={() => setRating(star)}
+                          onClick={() => handleRatingClick(star)}
                           className={`text-2xl ${
                             rating && star <= rating ? 'text-yellow-500' : 'text-gray-300'
                           }`}
+                          disabled={loading}
                         >
                           ★
                         </button>
@@ -262,8 +341,9 @@ export function BookDetailPage() {
                       {rating && (
                         <button
                           type="button"
-                          onClick={() => setRating(null)}
+                          onClick={handleClearRating}
                           className="ml-2 text-sm text-gray-500 hover:text-gray-700"
+                          disabled={loading}
                         >
                           クリア
                         </button>
@@ -272,7 +352,7 @@ export function BookDetailPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="comment">感想</Label>
+                    <Label htmlFor="comment">感想（任意）</Label>
                     <textarea
                       id="comment"
                       value={comment}
@@ -283,8 +363,8 @@ export function BookDetailPage() {
                     />
                   </div>
 
-                  <Button type="submit" disabled={loading} className="w-full">
-                    {loading ? '投稿中...' : 'レビューを投稿'}
+                  <Button type="submit" disabled={loading || !comment.trim()} className="w-full">
+                    {loading ? '投稿中...' : hasReview ? '感想を更新' : '感想を投稿'}
                   </Button>
                 </form>
               </CardContent>
@@ -306,20 +386,24 @@ export function BookDetailPage() {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <p className="font-semibold">{review.user.username}</p>
-                        <div className="flex gap-1">
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <span
-                              key={i}
-                              className={
-                                i < review.rating
-                                  ? 'text-yellow-500'
-                                  : 'text-gray-300'
-                              }
-                            >
-                              ★
-                            </span>
-                          ))}
-                        </div>
+                        {review.rating ? (
+                          <div className="flex gap-1">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <span
+                                key={i}
+                                className={
+                                  i < review.rating!
+                                    ? 'text-yellow-500'
+                                    : 'text-gray-300'
+                                }
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-500">評価なし</p>
+                        )}
                       </div>
                       <Button
                         size="sm"
