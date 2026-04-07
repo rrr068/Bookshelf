@@ -1,5 +1,9 @@
-import Database from 'better-sqlite3';
+import { PrismaClient } from '@prisma/client';
 import { UserRepository } from '../database/repositories/UserRepository';
+import { BookRepository } from '../database/repositories/BookRepository';
+import { ReadingStatusRepository } from '../database/repositories/ReadingStatusRepository';
+import { ReviewRepository } from '../database/repositories/ReviewRepository';
+import { LikeRepository } from '../database/repositories/LikeRepository';
 import { PasswordHasher } from '../auth/PasswordHasher';
 import { JwtService } from '../auth/JwtService';
 import { RegisterUserUseCase } from '../../application/usecases/RegisterUserUseCase';
@@ -14,8 +18,14 @@ import { AuthController } from '../../presentation/controllers/AuthController';
 export class Container {
   private static instance: Container;
 
-  // Infrastructure
+  // Infrastructure - Repositories
   public readonly userRepository: UserRepository;
+  public readonly bookRepository: BookRepository;
+  public readonly readingStatusRepository: ReadingStatusRepository;
+  public readonly reviewRepository: ReviewRepository;
+  public readonly likeRepository: LikeRepository;
+
+  // Infrastructure - Services
   public readonly passwordHasher: PasswordHasher;
   public readonly jwtService: JwtService;
 
@@ -27,9 +37,15 @@ export class Container {
   // Controllers
   public readonly authController: AuthController;
 
-  private constructor(db: Database.Database) {
-    // Infrastructure層の初期化
-    this.userRepository = new UserRepository(db);
+  private constructor(prisma: PrismaClient) {
+    // Infrastructure層 - Repositoriesの初期化
+    this.userRepository = new UserRepository(prisma);
+    this.bookRepository = new BookRepository(prisma);
+    this.readingStatusRepository = new ReadingStatusRepository(prisma);
+    this.reviewRepository = new ReviewRepository(prisma);
+    this.likeRepository = new LikeRepository(prisma);
+
+    // Infrastructure層 - Servicesの初期化
     this.passwordHasher = new PasswordHasher();
     this.jwtService = new JwtService();
 
@@ -61,10 +77,11 @@ export class Container {
   /**
    * シングルトンインスタンスを取得
    */
-  static getInstance(db: Database.Database): Container {
+  static getInstance(prisma: PrismaClient): Container {
     if (!Container.instance) {
-      Container.instance = new Container(db);
+      Container.instance = new Container(prisma);
     }
     return Container.instance;
   }
 }
+
