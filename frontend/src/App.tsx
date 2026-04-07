@@ -3,6 +3,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SignupPage } from './pages/SignupPage';
 import { BooksPage } from './pages/BooksPage';
+import { BookDetailPage } from './pages/BookDetailPage';
+import { UserProfilePage } from './pages/UserProfilePage';
 
 function App() {
   return (
@@ -18,6 +20,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <BooksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/book/:bookId"
+            element={
+              <ProtectedRoute>
+                <BookDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfilePage />
               </ProtectedRoute>
             }
           />

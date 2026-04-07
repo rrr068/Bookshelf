@@ -21,7 +21,7 @@ export function BookDetailPage() {
   const book = (location.state as { book?: Book })?.book || null;
 
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState<number | null>(null);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ReadingStatus | null>(null);
@@ -63,7 +63,7 @@ export function BookDetailPage() {
     try {
       const newReview = await createReview({
         bookId: book.googleBooksId,
-        rating,
+        rating: rating || undefined,
         comment: comment || undefined,
         bookData: {
           googleBooksId: book.googleBooksId,
@@ -245,20 +245,29 @@ export function BookDetailPage() {
               <CardContent>
                 <form onSubmit={handleSubmitReview} className="space-y-4">
                   <div>
-                    <Label htmlFor="rating">評価</Label>
-                    <div className="flex gap-2 mt-2">
+                    <Label htmlFor="rating">評価（任意）</Label>
+                    <div className="flex gap-2 mt-2 items-center">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
                           type="button"
                           onClick={() => setRating(star)}
                           className={`text-2xl ${
-                            star <= rating ? 'text-yellow-500' : 'text-gray-300'
+                            rating && star <= rating ? 'text-yellow-500' : 'text-gray-300'
                           }`}
                         >
                           ★
                         </button>
                       ))}
+                      {rating && (
+                        <button
+                          type="button"
+                          onClick={() => setRating(null)}
+                          className="ml-2 text-sm text-gray-500 hover:text-gray-700"
+                        >
+                          クリア
+                        </button>
+                      )}
                     </div>
                   </div>
 
