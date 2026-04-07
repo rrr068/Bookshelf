@@ -5,7 +5,7 @@ export interface Review {
   id: string;
   userId: string;
   bookId: string;
-  rating: number;
+  rating: number | null;
   comment: string | null;
   createdAt: string;
   updatedAt: string;
@@ -22,7 +22,7 @@ export interface Review {
  */
 export interface CreateReviewRequest {
   bookId: string;
-  rating: number;
+  rating?: number;
   comment?: string;
   bookData?: {
     googleBooksId: string;
