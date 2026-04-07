@@ -7,6 +7,7 @@ import { createAuthRoutes } from './presentation/routes/authRoutes.js';
 import { createReadingStatusRoutes } from './presentation/routes/readingStatusRoutes.js';
 import { createReviewRoutes } from './presentation/routes/reviewRoutes.js';
 import { createLikeRoutes } from './presentation/routes/likeRoutes.js';
+import { createBookLikeRoutes } from './presentation/routes/bookLikeRoutes.js';
 import { errorHandler } from './presentation/middlewares/errorHandler.js';
 
 // DIコンテナの初期化
@@ -49,6 +50,12 @@ const likeRoutes = createLikeRoutes(
   container.jwtService
 );
 app.route('/api/likes', likeRoutes);
+
+const bookLikeRoutes = createBookLikeRoutes(
+  container.bookLikeController,
+  container.jwtService
+);
+app.route('/api/book-likes', bookLikeRoutes);
 
 // エラーハンドラー
 app.onError(errorHandler);

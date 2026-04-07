@@ -24,6 +24,7 @@ model User {
   readingStatuses ReadingStatus[]
   reviews        Review[]
   likes          Like[]
+  bookLikes      BookLike[]
 
   @@index([email])
   @@map("users")
@@ -51,6 +52,7 @@ model Book {
   creator        User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   readingStatuses ReadingStatus[]
   reviews        Review[]
+  bookLikes      BookLike[]
 
   @@index([googleBooksId])
   @@index([title])
@@ -85,7 +87,7 @@ model Review {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   bookId    String   @map("book_id")
-  rating    Int      // 1-5
+  rating    Int?     // 1-5（オプショナル）
   comment   String?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -102,7 +104,7 @@ model Review {
   @@map("reviews")
 }
 
-// いいねテーブル
+// いいねテーブル（レビューへのいいね）
 model Like {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
@@ -117,4 +119,21 @@ model Like {
   @@index([reviewId])
   @@index([userId])
   @@map("likes")
+}
+
+// 本へのいいねテーブル
+model BookLike {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  bookId    String   @map("book_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // リレーション
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+  @@index([bookId])
+  @@index([userId])
+  @@map("book_likes")
 }

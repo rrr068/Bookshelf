@@ -4,6 +4,7 @@ import { BookRepository } from '../database/repositories/BookRepository';
 import { ReadingStatusRepository } from '../database/repositories/ReadingStatusRepository';
 import { ReviewRepository } from '../database/repositories/ReviewRepository';
 import { LikeRepository } from '../database/repositories/LikeRepository';
+import { BookLikeRepository } from '../database/repositories/BookLikeRepository';
 import { PasswordHasher } from '../auth/PasswordHasher';
 import { JwtService } from '../auth/JwtService';
 import { RegisterUserUseCase } from '../../application/usecases/RegisterUserUseCase';
@@ -14,10 +15,13 @@ import { GetReadingStatusUseCase } from '../../application/usecases/GetReadingSt
 import { CreateReviewUseCase } from '../../application/usecases/CreateReviewUseCase';
 import { ToggleLikeUseCase } from '../../application/usecases/ToggleLikeUseCase';
 import { GetUserLikedReviewsUseCase } from '../../application/usecases/GetUserLikedReviewsUseCase';
+import { ToggleBookLikeUseCase } from '../../application/usecases/ToggleBookLikeUseCase';
+import { GetUserLikedBooksUseCase } from '../../application/usecases/GetUserLikedBooksUseCase';
 import { AuthController } from '../../presentation/controllers/AuthController';
 import { ReadingStatusController } from '../../presentation/controllers/ReadingStatusController';
 import { ReviewController } from '../../presentation/controllers/ReviewController';
 import { LikeController } from '../../presentation/controllers/LikeController';
+import { BookLikeController } from '../../presentation/controllers/BookLikeController';
 
 /**
  * DIコンテナ
@@ -32,6 +36,7 @@ export class Container {
   public readonly readingStatusRepository: ReadingStatusRepository;
   public readonly reviewRepository: ReviewRepository;
   public readonly likeRepository: LikeRepository;
+  public readonly bookLikeRepository: BookLikeRepository;
 
   // Infrastructure - Services
   public readonly passwordHasher: PasswordHasher;
@@ -46,12 +51,15 @@ export class Container {
   public readonly createReviewUseCase: CreateReviewUseCase;
   public readonly toggleLikeUseCase: ToggleLikeUseCase;
   public readonly getUserLikedReviewsUseCase: GetUserLikedReviewsUseCase;
+  public readonly toggleBookLikeUseCase: ToggleBookLikeUseCase;
+  public readonly getUserLikedBooksUseCase: GetUserLikedBooksUseCase;
 
   // Controllers
   public readonly authController: AuthController;
   public readonly readingStatusController: ReadingStatusController;
   public readonly reviewController: ReviewController;
   public readonly likeController: LikeController;
+  public readonly bookLikeController: BookLikeController;
 
   private constructor(prisma: PrismaClient) {
     // Infrastructure層 - Repositoriesの初期化
@@ -60,6 +68,7 @@ export class Container {
     this.readingStatusRepository = new ReadingStatusRepository(prisma);
     this.reviewRepository = new ReviewRepository(prisma);
     this.likeRepository = new LikeRepository(prisma);
+    this.bookLikeRepository = new BookLikeRepository(prisma);
 
     // Infrastructure層 - Servicesの初期化
     this.passwordHasher = new PasswordHasher();
@@ -110,6 +119,17 @@ export class Container {
       this.userRepository
     );
 
+    this.toggleBookLikeUseCase = new ToggleBookLikeUseCase(
+      this.bookLikeRepository,
+      this.bookRepository
+    );
+
+    this.getUserLikedBooksUseCase = new GetUserLikedBooksUseCase(
+      this.bookLikeRepository,
+      this.bookRepository,
+      this.readingStatusRepository
+    );
+
     // Controllers層の初期化
     this.authController = new AuthController(
       this.registerUserUseCase,
@@ -129,6 +149,11 @@ export class Container {
     this.likeController = new LikeController(
       this.toggleLikeUseCase,
       this.getUserLikedReviewsUseCase
+    );
+
+    this.bookLikeController = new BookLikeController(
+      this.toggleBookLikeUseCase,
+      this.getUserLikedBooksUseCase
     );
   }
 

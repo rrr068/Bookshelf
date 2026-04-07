@@ -23,4 +23,9 @@ export interface IBookRepository {
    * 複数の書籍を取得
    */
   findMany(ids: string[]): Promise<Book[]>;
+
+  /**
+   * 書籍の平均評価を取得
+   */
+  getAverageRating(bookId: string): Promise<number | null>;
 }

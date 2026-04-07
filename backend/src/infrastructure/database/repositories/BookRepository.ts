@@ -100,6 +100,25 @@ export class BookRepository implements IBookRepository {
   }
 
   /**
+   * 書籍の平均評価を取得
+   */
+  async getAverageRating(bookId: string): Promise<number | null> {
+    const result = await this.prisma.review.aggregate({
+      where: {
+        bookId,
+        rating: {
+          not: null,
+        },
+      },
+      _avg: {
+        rating: true,
+      },
+    });
+
+    return result._avg.rating;
+  }
+
+  /**
    * PrismaのBookモデルをドメインエンティティにマッピング
    */
   private mapToEntity(prismaBook: any): Book {
