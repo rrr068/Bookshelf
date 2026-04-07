@@ -1,6 +1,8 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { register } from '@/services/authService';
 import { RegisterRequest } from '@/types/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +19,8 @@ import {
  * サインアップページ
  */
 export function SignupPage() {
+  const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState<RegisterRequest>({
     email: '',
     password: '',
@@ -24,7 +28,13 @@ export function SignupPage() {
   });
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [success, setSuccess] = useState<boolean>(false);
+
+  // 既にログイン済みの場合は一覧ページにリダイレクト
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   /**
    * フォーム入力の変更ハンドラー
@@ -49,7 +59,12 @@ export function SignupPage() {
     try {
       const response = await register(formData);
       console.log('Registration successful:', response);
-      setSuccess(true);
+
+      // ログイン状態を設定
+      login(response.user);
+
+      // 本の一覧ページに遷移
+      navigate('/', { replace: true });
     } catch (err: any) {
       setError(err.message || '登録に失敗しました');
     } finally {
@@ -70,17 +85,7 @@ export function SignupPage() {
         </CardHeader>
 
         <CardContent>
-          {success ? (
-            <div className="text-center space-y-4">
-              <div className="text-green-600 text-xl font-semibold">
-                登録完了！
-              </div>
-              <p className="text-muted-foreground">
-                ようこそ、Bookshelfへ
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
                   {error}
@@ -141,7 +146,6 @@ export function SignupPage() {
                 {loading ? '登録中...' : 'アカウント作成'}
               </Button>
             </form>
-          )}
         </CardContent>
 
         <CardFooter className="flex justify-center">
