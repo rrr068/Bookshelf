@@ -1,12 +1,14 @@
 import { Context } from 'hono';
 import { UpsertReadingStatusUseCase } from '../../application/usecases/UpsertReadingStatusUseCase';
 import { GetReadingStatusUseCase } from '../../application/usecases/GetReadingStatusUseCase';
+import { GetUserBooksByStatusUseCase } from '../../application/usecases/GetUserBooksByStatusUseCase';
 import { upsertReadingStatusSchema } from '../validators/readingStatusValidator';
 
 export class ReadingStatusController {
   constructor(
     private readonly upsertReadingStatusUseCase: UpsertReadingStatusUseCase,
-    private readonly getReadingStatusUseCase: GetReadingStatusUseCase
+    private readonly getReadingStatusUseCase: GetReadingStatusUseCase,
+    private readonly getUserBooksByStatusUseCase: GetUserBooksByStatusUseCase
   ) {}
 
   async upsert(c: Context) {
@@ -48,6 +50,18 @@ export class ReadingStatusController {
       return c.json(result, 200);
     } catch (error: any) {
       return c.json({ error: error.message || 'Failed to get reading status' }, 400);
+    }
+  }
+
+  async getUserBooks(c: Context) {
+    try {
+      const userId = c.get('userId');
+      const status = c.req.query('status');
+
+      const books = await this.getUserBooksByStatusUseCase.execute(userId, status);
+      return c.json(books, 200);
+    } catch (error: any) {
+      return c.json({ error: error.message || 'Failed to get user books' }, 400);
     }
   }
 }

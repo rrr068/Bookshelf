@@ -40,16 +40,16 @@ export interface BooksByStatus {
   googleBooksId: string;
   title: string;
   authors: string[];
-  publisher?: string;
-  publishedDate?: string;
-  description?: string;
-  isbn10?: string;
-  isbn13?: string;
-  pageCount?: number;
-  thumbnailUrl?: string;
+  publisher: string | null;
+  publishedDate: string | null;
+  description: string | null;
+  isbn10: string | null;
+  isbn13: string | null;
+  pageCount: number | null;
+  thumbnailUrl: string | null;
   language: string;
   status: ReadingStatus;
-  likesCount?: number;
+  likesCount: number;
   averageRating?: number;
 }
 

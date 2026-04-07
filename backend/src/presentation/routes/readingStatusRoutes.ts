@@ -11,6 +11,7 @@ export const createReadingStatusRoutes = (
   const authMiddleware = createAuthMiddleware(jwtService);
 
   app.post('/', authMiddleware, (c) => controller.upsert(c));
+  app.get('/', authMiddleware, (c) => controller.getUserBooks(c));
   app.get('/:bookId', authMiddleware, (c) => controller.get(c));
 
   return app;
