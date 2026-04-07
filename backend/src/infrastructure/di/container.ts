@@ -10,6 +10,7 @@ import { RegisterUserUseCase } from '../../application/usecases/RegisterUserUseC
 import { LoginUserUseCase } from '../../application/usecases/LoginUserUseCase';
 import { GetCurrentUserUseCase } from '../../application/usecases/GetCurrentUserUseCase';
 import { UpsertReadingStatusUseCase } from '../../application/usecases/UpsertReadingStatusUseCase';
+import { GetReadingStatusUseCase } from '../../application/usecases/GetReadingStatusUseCase';
 import { CreateReviewUseCase } from '../../application/usecases/CreateReviewUseCase';
 import { ToggleLikeUseCase } from '../../application/usecases/ToggleLikeUseCase';
 import { GetUserLikedReviewsUseCase } from '../../application/usecases/GetUserLikedReviewsUseCase';
@@ -41,6 +42,7 @@ export class Container {
   public readonly loginUserUseCase: LoginUserUseCase;
   public readonly getCurrentUserUseCase: GetCurrentUserUseCase;
   public readonly upsertReadingStatusUseCase: UpsertReadingStatusUseCase;
+  public readonly getReadingStatusUseCase: GetReadingStatusUseCase;
   public readonly createReviewUseCase: CreateReviewUseCase;
   public readonly toggleLikeUseCase: ToggleLikeUseCase;
   public readonly getUserLikedReviewsUseCase: GetUserLikedReviewsUseCase;
@@ -85,6 +87,11 @@ export class Container {
       this.bookRepository
     );
 
+    this.getReadingStatusUseCase = new GetReadingStatusUseCase(
+      this.readingStatusRepository,
+      this.bookRepository
+    );
+
     this.createReviewUseCase = new CreateReviewUseCase(
       this.reviewRepository,
       this.bookRepository,
@@ -111,7 +118,8 @@ export class Container {
     );
 
     this.readingStatusController = new ReadingStatusController(
-      this.upsertReadingStatusUseCase
+      this.upsertReadingStatusUseCase,
+      this.getReadingStatusUseCase
     );
 
     this.reviewController = new ReviewController(
