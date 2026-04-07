@@ -9,7 +9,14 @@ import { JwtService } from '../auth/JwtService';
 import { RegisterUserUseCase } from '../../application/usecases/RegisterUserUseCase';
 import { LoginUserUseCase } from '../../application/usecases/LoginUserUseCase';
 import { GetCurrentUserUseCase } from '../../application/usecases/GetCurrentUserUseCase';
+import { UpsertReadingStatusUseCase } from '../../application/usecases/UpsertReadingStatusUseCase';
+import { CreateReviewUseCase } from '../../application/usecases/CreateReviewUseCase';
+import { ToggleLikeUseCase } from '../../application/usecases/ToggleLikeUseCase';
+import { GetUserLikedReviewsUseCase } from '../../application/usecases/GetUserLikedReviewsUseCase';
 import { AuthController } from '../../presentation/controllers/AuthController';
+import { ReadingStatusController } from '../../presentation/controllers/ReadingStatusController';
+import { ReviewController } from '../../presentation/controllers/ReviewController';
+import { LikeController } from '../../presentation/controllers/LikeController';
 
 /**
  * DIコンテナ
@@ -33,9 +40,16 @@ export class Container {
   public readonly registerUserUseCase: RegisterUserUseCase;
   public readonly loginUserUseCase: LoginUserUseCase;
   public readonly getCurrentUserUseCase: GetCurrentUserUseCase;
+  public readonly upsertReadingStatusUseCase: UpsertReadingStatusUseCase;
+  public readonly createReviewUseCase: CreateReviewUseCase;
+  public readonly toggleLikeUseCase: ToggleLikeUseCase;
+  public readonly getUserLikedReviewsUseCase: GetUserLikedReviewsUseCase;
 
   // Controllers
   public readonly authController: AuthController;
+  public readonly readingStatusController: ReadingStatusController;
+  public readonly reviewController: ReviewController;
+  public readonly likeController: LikeController;
 
   private constructor(prisma: PrismaClient) {
     // Infrastructure層 - Repositoriesの初期化
@@ -66,11 +80,47 @@ export class Container {
       this.userRepository
     );
 
+    this.upsertReadingStatusUseCase = new UpsertReadingStatusUseCase(
+      this.readingStatusRepository,
+      this.bookRepository
+    );
+
+    this.createReviewUseCase = new CreateReviewUseCase(
+      this.reviewRepository,
+      this.bookRepository,
+      this.userRepository,
+      this.likeRepository
+    );
+
+    this.toggleLikeUseCase = new ToggleLikeUseCase(
+      this.likeRepository,
+      this.reviewRepository
+    );
+
+    this.getUserLikedReviewsUseCase = new GetUserLikedReviewsUseCase(
+      this.likeRepository,
+      this.reviewRepository,
+      this.userRepository
+    );
+
     // Controllers層の初期化
     this.authController = new AuthController(
       this.registerUserUseCase,
       this.loginUserUseCase,
       this.getCurrentUserUseCase
+    );
+
+    this.readingStatusController = new ReadingStatusController(
+      this.upsertReadingStatusUseCase
+    );
+
+    this.reviewController = new ReviewController(
+      this.createReviewUseCase
+    );
+
+    this.likeController = new LikeController(
+      this.toggleLikeUseCase,
+      this.getUserLikedReviewsUseCase
     );
   }
 

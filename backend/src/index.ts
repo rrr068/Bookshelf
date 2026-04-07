@@ -4,6 +4,9 @@ import { cors } from 'hono/cors';
 import { prisma } from './infrastructure/database/prisma.js';
 import { Container } from './infrastructure/di/container.js';
 import { createAuthRoutes } from './presentation/routes/authRoutes.js';
+import { createReadingStatusRoutes } from './presentation/routes/readingStatusRoutes.js';
+import { createReviewRoutes } from './presentation/routes/reviewRoutes.js';
+import { createLikeRoutes } from './presentation/routes/likeRoutes.js';
 import { errorHandler } from './presentation/middlewares/errorHandler.js';
 
 // DIコンテナの初期化
@@ -22,12 +25,30 @@ app.get('/health', (c) => {
   return c.json({ status: 'ok', message: 'Backend is running with Prisma + SQLite' });
 });
 
-// 認証ルートのマウント
+// ルートのマウント
 const authRoutes = createAuthRoutes(
   container.authController,
   container.jwtService
 );
 app.route('/api/auth', authRoutes);
+
+const readingStatusRoutes = createReadingStatusRoutes(
+  container.readingStatusController,
+  container.jwtService
+);
+app.route('/api/reading-status', readingStatusRoutes);
+
+const reviewRoutes = createReviewRoutes(
+  container.reviewController,
+  container.jwtService
+);
+app.route('/api/reviews', reviewRoutes);
+
+const likeRoutes = createLikeRoutes(
+  container.likeController,
+  container.jwtService
+);
+app.route('/api/likes', likeRoutes);
 
 // エラーハンドラー
 app.onError(errorHandler);
