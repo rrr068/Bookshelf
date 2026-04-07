@@ -8,6 +8,7 @@ interface BookCardProps {
 
 /**
  * 本のカードコンポーネント
+ * クリックすると詳細ページに遷移
  */
 export function BookCard({ book, onClick }: BookCardProps) {
   return (

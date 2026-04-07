@@ -45,6 +45,9 @@ export interface Book {
   thumbnailUrl?: string;
   categories?: string[];
   language?: string;
+  averageRating?: number;
+  likesCount?: number;
+  isLikedByCurrentUser?: boolean;
 }
 
 /**

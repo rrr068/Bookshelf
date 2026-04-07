@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { searchBooks, searchBooksByCategory, getFeaturedBooks } from '@/services
  */
 export function BooksPage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<BookCategory>('全て');
@@ -74,6 +76,13 @@ export function BooksPage() {
     logout();
   };
 
+  /**
+   * 本をクリック - 詳細ページに遷移
+   */
+  const handleBookClick = (book: Book) => {
+    navigate(`/book/${book.id}`, { state: { book } });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
@@ -84,9 +93,13 @@ export function BooksPage() {
               📚 Bookshelf
             </h1>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = '/profile'}
+              >
                 {user?.username} さん
-              </span>
+              </Button>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 ログアウト
               </Button>
@@ -148,10 +161,7 @@ export function BooksPage() {
                 <BookCard
                   key={book.id}
                   book={book}
-                  onClick={() => {
-                    // TODO: 詳細ページへの遷移を実装
-                    console.log('Book clicked:', book.title);
-                  }}
+                  onClick={() => handleBookClick(book)}
                 />
               ))}
             </div>

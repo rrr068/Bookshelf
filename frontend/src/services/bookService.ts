@@ -17,8 +17,9 @@ export async function searchBooks(
         q: query,
         maxResults,
         startIndex,
-        langRestrict: 'ja', // 日本語の本を優先
+        langRestrict: 'ja', // 日本語の本のみ
         orderBy: 'relevance',
+        country: 'JP', // 日本で利用可能な本
       },
     });
 
@@ -26,7 +27,12 @@ export async function searchBooks(
       return [];
     }
 
-    return response.data.items.map(mapGoogleBookToBook);
+    // 日本語の本のみフィルタリング
+    const books = response.data.items
+      .map(mapGoogleBookToBook)
+      .filter((book) => book.language === 'ja');
+
+    return books;
   } catch (error) {
     console.error('Failed to search books:', error);
     throw new Error('本の検索に失敗しました');
@@ -41,19 +47,20 @@ export async function searchBooksByCategory(
   maxResults: number = 40
 ): Promise<Book[]> {
   if (category === '全て') {
-    // デフォルトで人気の本を取得
-    return searchBooks('ベストセラー OR 話題', maxResults);
+    // 日本の人気書籍を取得
+    return searchBooks('日本 書籍', maxResults);
   }
 
   const categoryQuery = mapCategoryToQuery(category);
-  return searchBooks(`subject:${categoryQuery}`, maxResults);
+  // 日本語のクエリを追加して、より日本の本を取得しやすくする
+  return searchBooks(`${categoryQuery} 日本語`, maxResults);
 }
 
 /**
  * 新着・人気の本を取得
  */
 export async function getFeaturedBooks(maxResults: number = 20): Promise<Book[]> {
-  return searchBooks('ベストセラー OR 話題の本', maxResults);
+  return searchBooks('日本 新刊 書籍', maxResults);
 }
 
 /**
@@ -83,19 +90,21 @@ function mapGoogleBookToBook(item: GoogleBookItem): Book {
 
 /**
  * カテゴリー名をGoogle Books APIのクエリに変換
+ * 日本語のクエリを使用して、より日本の本を取得しやすくする
  */
 function mapCategoryToQuery(category: string): string {
   const categoryMap: Record<string, string> = {
-    '文学・小説': 'fiction',
-    'ビジネス': 'business',
-    '自己啓発': 'self-help',
-    '技術書': 'computers',
-    '歴史': 'history',
-    '科学': 'science',
-    'ミステリー': 'mystery',
-    'SF・ファンタジー': 'fantasy',
-    'ノンフィクション': 'non-fiction',
-    'エッセイ': 'essay',
+    '文学・小説': '小説 OR 文学',
+    'ビジネス': 'ビジネス OR 経営',
+    '自己啓発': '自己啓発',
+    'IT・コンピュータ': 'IT OR コンピュータ',
+    '技術書・プログラミング': 'プログラミング OR 技術書',
+    '歴史': '歴史',
+    '科学': '科学',
+    'ミステリー': 'ミステリー OR 推理小説',
+    'SF・ファンタジー': 'SF OR ファンタジー',
+    'ノンフィクション': 'ノンフィクション',
+    'エッセイ': 'エッセイ',
   };
 
   return categoryMap[category] || category;
