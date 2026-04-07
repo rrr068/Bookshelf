@@ -17,7 +17,7 @@ export function BooksPage() {
   const navigate = useNavigate();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<BookCategory>('全て');
+  const [selectedCategory, setSelectedCategory] = useState<BookCategory>('おすすめ');
   const [searchQuery, setSearchQuery] = useState('');
 
   /**
@@ -26,6 +26,16 @@ export function BooksPage() {
   useEffect(() => {
     loadBooks();
   }, [selectedCategory]);
+
+  /**
+   * 人気度スコアを計算
+   */
+  const calculatePopularityScore = (book: Book): number => {
+    const rating = book.averageRating || 0;
+    const likes = book.likesCount || 0;
+    // 評価を重視（5点満点を10倍）+ いいね数
+    return (rating * 10) + likes;
+  };
 
   /**
    * 本を読み込む
@@ -52,7 +62,12 @@ export function BooksPage() {
         };
       });
 
-      setBooks(booksWithMetadata);
+      // 人気順にソート
+      const sortedBooks = booksWithMetadata.sort((a, b) => {
+        return calculatePopularityScore(b) - calculatePopularityScore(a);
+      });
+
+      setBooks(sortedBooks);
     } catch (error) {
       console.error('Failed to load books:', error);
     } finally {
@@ -86,7 +101,12 @@ export function BooksPage() {
         };
       });
 
-      setBooks(booksWithMetadata);
+      // 人気順にソート
+      const sortedBooks = booksWithMetadata.sort((a, b) => {
+        return calculatePopularityScore(b) - calculatePopularityScore(a);
+      });
+
+      setBooks(sortedBooks);
       setSelectedCategory('全て');
     } catch (error) {
       console.error('Failed to search books:', error);
@@ -183,9 +203,13 @@ export function BooksPage() {
                 variant={selectedCategory === category ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleCategoryChange(category)}
-                className="whitespace-nowrap"
+                className={`whitespace-nowrap ${
+                  category === 'おすすめ' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600' : ''
+                } ${
+                  selectedCategory === category && category === 'おすすめ' ? 'ring-2 ring-purple-300' : ''
+                }`}
               >
-                {category}
+                {category === 'おすすめ' ? '⭐ おすすめ' : category}
               </Button>
             ))}
           </div>
@@ -206,8 +230,13 @@ export function BooksPage() {
           </div>
         ) : (
           <>
-            <div className="mb-4 text-sm text-gray-600">
-              {books.length} 件の本が見つかりました
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {books.length} 件の本が見つかりました
+              </div>
+              <div className="text-xs text-gray-500">
+                人気順（評価 × いいね数）
+              </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {books.map((book) => (

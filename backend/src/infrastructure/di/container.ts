@@ -12,12 +12,18 @@ import { LoginUserUseCase } from '../../application/usecases/LoginUserUseCase';
 import { GetCurrentUserUseCase } from '../../application/usecases/GetCurrentUserUseCase';
 import { UpsertReadingStatusUseCase } from '../../application/usecases/UpsertReadingStatusUseCase';
 import { GetReadingStatusUseCase } from '../../application/usecases/GetReadingStatusUseCase';
+import { GetUserBooksByStatusUseCase } from '../../application/usecases/GetUserBooksByStatusUseCase';
 import { CreateReviewUseCase } from '../../application/usecases/CreateReviewUseCase';
+import { GetBookReviewsUseCase } from '../../application/usecases/GetBookReviewsUseCase';
+import { UpdateReviewUseCase } from '../../application/usecases/UpdateReviewUseCase';
+import { DeleteReviewUseCase } from '../../application/usecases/DeleteReviewUseCase';
 import { ToggleLikeUseCase } from '../../application/usecases/ToggleLikeUseCase';
 import { GetUserLikedReviewsUseCase } from '../../application/usecases/GetUserLikedReviewsUseCase';
 import { ToggleBookLikeUseCase } from '../../application/usecases/ToggleBookLikeUseCase';
 import { GetUserLikedBooksUseCase } from '../../application/usecases/GetUserLikedBooksUseCase';
+import { GetBooksMetadataUseCase } from '../../application/usecases/GetBooksMetadataUseCase';
 import { AuthController } from '../../presentation/controllers/AuthController';
+import { BookController } from '../../presentation/controllers/BookController';
 import { ReadingStatusController } from '../../presentation/controllers/ReadingStatusController';
 import { ReviewController } from '../../presentation/controllers/ReviewController';
 import { LikeController } from '../../presentation/controllers/LikeController';
@@ -48,11 +54,16 @@ export class Container {
   public readonly getCurrentUserUseCase: GetCurrentUserUseCase;
   public readonly upsertReadingStatusUseCase: UpsertReadingStatusUseCase;
   public readonly getReadingStatusUseCase: GetReadingStatusUseCase;
+  public readonly getUserBooksByStatusUseCase: GetUserBooksByStatusUseCase;
   public readonly createReviewUseCase: CreateReviewUseCase;
+  public readonly getBookReviewsUseCase: GetBookReviewsUseCase;
+  public readonly updateReviewUseCase: UpdateReviewUseCase;
+  public readonly deleteReviewUseCase: DeleteReviewUseCase;
   public readonly toggleLikeUseCase: ToggleLikeUseCase;
   public readonly getUserLikedReviewsUseCase: GetUserLikedReviewsUseCase;
   public readonly toggleBookLikeUseCase: ToggleBookLikeUseCase;
   public readonly getUserLikedBooksUseCase: GetUserLikedBooksUseCase;
+  public readonly getBooksMetadataUseCase: GetBooksMetadataUseCase;
 
   // Controllers
   public readonly authController: AuthController;
@@ -60,6 +71,7 @@ export class Container {
   public readonly reviewController: ReviewController;
   public readonly likeController: LikeController;
   public readonly bookLikeController: BookLikeController;
+  public readonly bookController: BookController;
 
   private constructor(prisma: PrismaClient) {
     // Infrastructure層 - Repositoriesの初期化
@@ -101,11 +113,34 @@ export class Container {
       this.bookRepository
     );
 
+    this.getUserBooksByStatusUseCase = new GetUserBooksByStatusUseCase(
+      this.readingStatusRepository,
+      this.bookRepository,
+      this.bookLikeRepository
+    );
+
     this.createReviewUseCase = new CreateReviewUseCase(
       this.reviewRepository,
       this.bookRepository,
       this.userRepository,
       this.likeRepository
+    );
+
+    this.getBookReviewsUseCase = new GetBookReviewsUseCase(
+      this.reviewRepository,
+      this.userRepository,
+      this.likeRepository,
+      this.bookRepository
+    );
+
+    this.updateReviewUseCase = new UpdateReviewUseCase(
+      this.reviewRepository,
+      this.bookRepository
+    );
+
+    this.deleteReviewUseCase = new DeleteReviewUseCase(
+      this.reviewRepository,
+      this.bookRepository
     );
 
     this.toggleLikeUseCase = new ToggleLikeUseCase(
@@ -130,6 +165,11 @@ export class Container {
       this.readingStatusRepository
     );
 
+    this.getBooksMetadataUseCase = new GetBooksMetadataUseCase(
+      this.bookRepository,
+      this.bookLikeRepository
+    );
+
     // Controllers層の初期化
     this.authController = new AuthController(
       this.registerUserUseCase,
@@ -139,11 +179,15 @@ export class Container {
 
     this.readingStatusController = new ReadingStatusController(
       this.upsertReadingStatusUseCase,
-      this.getReadingStatusUseCase
+      this.getReadingStatusUseCase,
+      this.getUserBooksByStatusUseCase
     );
 
     this.reviewController = new ReviewController(
-      this.createReviewUseCase
+      this.createReviewUseCase,
+      this.getBookReviewsUseCase,
+      this.updateReviewUseCase,
+      this.deleteReviewUseCase
     );
 
     this.likeController = new LikeController(
@@ -154,6 +198,10 @@ export class Container {
     this.bookLikeController = new BookLikeController(
       this.toggleBookLikeUseCase,
       this.getUserLikedBooksUseCase
+    );
+
+    this.bookController = new BookController(
+      this.getBooksMetadataUseCase
     );
   }
 

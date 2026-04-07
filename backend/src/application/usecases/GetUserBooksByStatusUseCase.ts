@@ -1,8 +1,8 @@
-import { IBookLikeRepository } from '../../domain/repositories/IBookLikeRepository';
-import { IBookRepository } from '../../domain/repositories/IBookRepository';
 import { IReadingStatusRepository } from '../../domain/repositories/IReadingStatusRepository';
+import { IBookRepository } from '../../domain/repositories/IBookRepository';
+import { IBookLikeRepository } from '../../domain/repositories/IBookLikeRepository';
 
-export interface BookWithStatusDto {
+export interface BooksByStatusDto {
   googleBooksId: string;
   title: string;
   authors: string[];
@@ -14,29 +14,34 @@ export interface BookWithStatusDto {
   pageCount: number | null;
   thumbnailUrl: string | null;
   language: string;
+  status: string;
   likesCount: number;
   averageRating?: number;
-  readingStatus?: string | null;
 }
 
 /**
- * ユーザーがいいねした本の一覧を取得するユースケース
+ * ユーザーの読書ステータス別の本一覧を取得するユースケース
  */
-export class GetUserLikedBooksUseCase {
+export class GetUserBooksByStatusUseCase {
   constructor(
-    private readonly bookLikeRepository: IBookLikeRepository,
+    private readonly readingStatusRepository: IReadingStatusRepository,
     private readonly bookRepository: IBookRepository,
-    private readonly readingStatusRepository: IReadingStatusRepository
+    private readonly bookLikeRepository: IBookLikeRepository
   ) {}
 
-  async execute(userId: string): Promise<BookWithStatusDto[]> {
-    // ユーザーのいいねを取得
-    const bookLikes = await this.bookLikeRepository.findByUserId(userId);
+  async execute(userId: string, status?: string): Promise<BooksByStatusDto[]> {
+    // ユーザーの読書ステータスを取得
+    const readingStatuses = await this.readingStatusRepository.findByUserId(userId);
+
+    // statusが指定されている場合はフィルタリング
+    const filteredStatuses = status
+      ? readingStatuses.filter((rs) => rs.status === status)
+      : readingStatuses;
 
     // 各本の詳細情報を取得
     const books = await Promise.all(
-      bookLikes.map(async (like) => {
-        const book = await this.bookRepository.findById(like.bookId);
+      filteredStatuses.map(async (rs) => {
+        const book = await this.bookRepository.findById(rs.bookId);
         if (!book) return null;
 
         // いいね数を取得
@@ -44,9 +49,6 @@ export class GetUserLikedBooksUseCase {
 
         // 平均評価を取得
         const averageRating = await this.bookRepository.getAverageRating(book.id);
-
-        // 読書ステータスを取得
-        const readingStatus = await this.readingStatusRepository.findByUserAndBook(userId, book.id);
 
         return {
           googleBooksId: book.googleBooksId,
@@ -60,14 +62,14 @@ export class GetUserLikedBooksUseCase {
           pageCount: book.pageCount,
           thumbnailUrl: book.thumbnailUrl,
           language: book.language,
+          status: rs.status,
           likesCount,
           averageRating: averageRating || undefined,
-          readingStatus: readingStatus?.status || null,
         };
       })
     );
 
     // nullを除外
-    return books.filter(book => book !== null) as BookWithStatusDto[];
+    return books.filter(book => book !== null) as BooksByStatusDto[];
   }
 }

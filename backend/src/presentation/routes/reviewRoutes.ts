@@ -11,6 +11,9 @@ export const createReviewRoutes = (
   const authMiddleware = createAuthMiddleware(jwtService);
 
   app.post('/', authMiddleware, (c) => controller.create(c));
+  app.get('/book/:googleBooksId', authMiddleware, (c) => controller.getBookReviews(c));
+  app.put('/:googleBooksId', authMiddleware, (c) => controller.update(c));
+  app.delete('/:googleBooksId', authMiddleware, (c) => controller.delete(c));
 
   return app;
 };

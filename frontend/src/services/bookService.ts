@@ -46,6 +46,11 @@ export async function searchBooksByCategory(
   category: string,
   maxResults: number = 40
 ): Promise<Book[]> {
+  if (category === 'おすすめ') {
+    // おすすめは複数カテゴリから取得
+    return getRecommendedBooks(maxResults);
+  }
+
   if (category === '全て') {
     // 日本の人気書籍を取得
     return searchBooks('日本 書籍', maxResults);
@@ -54,6 +59,34 @@ export async function searchBooksByCategory(
   const categoryQuery = mapCategoryToQuery(category);
   // 日本語のクエリを追加して、より日本の本を取得しやすくする
   return searchBooks(`${categoryQuery} 日本語`, maxResults);
+}
+
+/**
+ * おすすめの本を取得（複数カテゴリから人気の本を取得）
+ */
+async function getRecommendedBooks(maxResults: number = 40): Promise<Book[]> {
+  try {
+    // 複数のカテゴリから少しずつ取得
+    const categories = ['ビジネス', 'IT・コンピュータ', '自己啓発', '文学・小説'];
+    const booksPerCategory = Math.ceil(maxResults / categories.length);
+
+    const allBooks = await Promise.all(
+      categories.map(cat => searchBooksByCategory(cat, booksPerCategory))
+    );
+
+    // 結果を結合して重複削除
+    const uniqueBooks = new Map<string, Book>();
+    allBooks.flat().forEach(book => {
+      if (!uniqueBooks.has(book.googleBooksId)) {
+        uniqueBooks.set(book.googleBooksId, book);
+      }
+    });
+
+    return Array.from(uniqueBooks.values()).slice(0, maxResults);
+  } catch (error) {
+    console.error('Failed to get recommended books:', error);
+    return [];
+  }
 }
 
 /**
