@@ -1,0 +1,120 @@
+// Prisma Schema
+// データベースの定義
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ユーザーテーブル
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  username      String
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  books          Book[]
+  readingStatuses ReadingStatus[]
+  reviews        Review[]
+  likes          Like[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// 書籍テーブル
+model Book {
+  id             String   @id @default(uuid())
+  googleBooksId  String   @unique @map("google_books_id")
+  title          String
+  authors        String?
+  publisher      String?
+  publishedDate  String?  @map("published_date")
+  description    String?
+  isbn10         String?  @map("isbn_10")
+  isbn13         String?  @map("isbn_13")
+  pageCount      Int?     @map("page_count")
+  thumbnailUrl   String?  @map("thumbnail_url")
+  language       String   @default("ja")
+  createdBy      String   @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  creator        User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  readingStatuses ReadingStatus[]
+  reviews        Review[]
+
+  @@index([googleBooksId])
+  @@index([title])
+  @@index([isbn13])
+  @@map("books")
+}
+
+// 読書ステータステーブル
+model ReadingStatus {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  bookId     String    @map("book_id")
+  status     String    // want_to_read, reading, completed, on_hold, dropped
+  startedAt  DateTime? @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  // リレーション
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book       Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+  @@index([userId])
+  @@index([bookId])
+  @@index([status])
+  @@map("reading_statuses")
+}
+
+// レビューテーブル
+model Review {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  bookId    String   @map("book_id")
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  likes     Like[]
+
+  @@unique([userId, bookId])
+  @@index([bookId])
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("reviews")
+}
+
+// いいねテーブル
+model Like {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  reviewId  String   @map("review_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // リレーション
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reviewId])
+  @@index([reviewId])
+  @@index([userId])
+  @@map("likes")
+}
