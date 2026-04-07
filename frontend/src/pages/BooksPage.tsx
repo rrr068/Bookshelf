@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { BookCard } from '@/components/BookCard';
 import { Book, BookCategories, BookCategory } from '@/types/book';
 import { searchBooks, searchBooksByCategory, getFeaturedBooks } from '@/services/bookService';
+import { toggleBookLike } from '@/services/bookLikeService';
 
 /**
  * 本の一覧ページ（Filmarksライクなデザイン）
@@ -81,6 +82,25 @@ export function BooksPage() {
    */
   const handleBookClick = (book: Book) => {
     navigate(`/book/${book.id}`, { state: { book } });
+  };
+
+  /**
+   * いいねボタンクリック
+   */
+  const handleLike = async (e: React.MouseEvent, book: Book) => {
+    e.stopPropagation();
+    try {
+      const result = await toggleBookLike(book.googleBooksId);
+
+      // 本の一覧を更新
+      setBooks(books.map(b =>
+        b.googleBooksId === book.googleBooksId
+          ? { ...b, isLikedByCurrentUser: result.liked, likesCount: result.likesCount }
+          : b
+      ));
+    } catch (error: any) {
+      alert(error.message || 'いいねに失敗しました');
+    }
   };
 
   return (
@@ -162,6 +182,7 @@ export function BooksPage() {
                   key={book.id}
                   book={book}
                   onClick={() => handleBookClick(book)}
+                  onLike={(e) => handleLike(e, book)}
                 />
               ))}
             </div>
