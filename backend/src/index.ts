@@ -5,8 +5,8 @@ import { prisma } from './infrastructure/database/prisma.js';
 import { Container } from './infrastructure/di/container.js';
 import { createAuthRoutes } from './presentation/routes/authRoutes.js';
 import { createReadingStatusRoutes } from './presentation/routes/readingStatusRoutes.js';
-import { createReviewRoutes } from './presentation/routes/reviewRoutes.js';
-import { createLikeRoutes } from './presentation/routes/likeRoutes.js';
+import { createPostRoutes } from './presentation/routes/postRoutes.js';
+import { createPostLikeRoutes } from './presentation/routes/postLikeRoutes.js';
 import { createBookLikeRoutes } from './presentation/routes/bookLikeRoutes.js';
 import { createBookRoutes } from './presentation/routes/bookRoutes.js';
 import { createGoogleBooksRoutes } from './presentation/routes/googleBooksRoutes.js';
@@ -42,17 +42,17 @@ const readingStatusRoutes = createReadingStatusRoutes(
 );
 app.route('/api/reading-status', readingStatusRoutes);
 
-const reviewRoutes = createReviewRoutes(
-  container.reviewController,
+const postRoutes = createPostRoutes(
+  container.postController,
   container.jwtService
 );
-app.route('/api/reviews', reviewRoutes);
+app.route('/api/posts', postRoutes);
 
-const likeRoutes = createLikeRoutes(
-  container.likeController,
+const postLikeRoutes = createPostLikeRoutes(
+  container.postLikeController,
   container.jwtService
 );
-app.route('/api/likes', likeRoutes);
+app.route('/api/post-likes', postLikeRoutes);
 
 const bookLikeRoutes = createBookLikeRoutes(
   container.bookLikeController,

@@ -2,8 +2,8 @@ import { PrismaClient } from '@prisma/client';
 import { UserRepository } from '../database/repositories/UserRepository';
 import { BookRepository } from '../database/repositories/BookRepository';
 import { ReadingStatusRepository } from '../database/repositories/ReadingStatusRepository';
-import { ReviewRepository } from '../database/repositories/ReviewRepository';
-import { LikeRepository } from '../database/repositories/LikeRepository';
+import { PostRepository } from '../database/repositories/PostRepository';
+import { PostLikeRepository } from '../database/repositories/PostLikeRepository';
 import { BookLikeRepository } from '../database/repositories/BookLikeRepository';
 import { PasswordHasher } from '../auth/PasswordHasher';
 import { JwtService } from '../auth/JwtService';
@@ -13,12 +13,11 @@ import { GetCurrentUserUseCase } from '../../application/usecases/GetCurrentUser
 import { UpsertReadingStatusUseCase } from '../../application/usecases/UpsertReadingStatusUseCase';
 import { GetReadingStatusUseCase } from '../../application/usecases/GetReadingStatusUseCase';
 import { GetUserBooksByStatusUseCase } from '../../application/usecases/GetUserBooksByStatusUseCase';
-import { CreateReviewUseCase } from '../../application/usecases/CreateReviewUseCase';
-import { GetBookReviewsUseCase } from '../../application/usecases/GetBookReviewsUseCase';
-import { UpdateReviewUseCase } from '../../application/usecases/UpdateReviewUseCase';
-import { DeleteReviewUseCase } from '../../application/usecases/DeleteReviewUseCase';
-import { ToggleLikeUseCase } from '../../application/usecases/ToggleLikeUseCase';
-import { GetUserLikedReviewsUseCase } from '../../application/usecases/GetUserLikedReviewsUseCase';
+import { CreatePostUseCase } from '../../application/usecases/CreatePostUseCase';
+import { GetBookPostsUseCase } from '../../application/usecases/GetBookPostsUseCase';
+import { UpdatePostUseCase } from '../../application/usecases/UpdatePostUseCase';
+import { DeletePostUseCase } from '../../application/usecases/DeletePostUseCase';
+import { TogglePostLikeUseCase } from '../../application/usecases/TogglePostLikeUseCase';
 import { ToggleBookLikeUseCase } from '../../application/usecases/ToggleBookLikeUseCase';
 import { GetUserLikedBooksUseCase } from '../../application/usecases/GetUserLikedBooksUseCase';
 import { GetBooksMetadataUseCase } from '../../application/usecases/GetBooksMetadataUseCase';
@@ -27,8 +26,8 @@ import { AuthController } from '../../presentation/controllers/AuthController';
 import { BookController } from '../../presentation/controllers/BookController';
 import { GoogleBooksController } from '../../presentation/controllers/GoogleBooksController';
 import { ReadingStatusController } from '../../presentation/controllers/ReadingStatusController';
-import { ReviewController } from '../../presentation/controllers/ReviewController';
-import { LikeController } from '../../presentation/controllers/LikeController';
+import { PostController } from '../../presentation/controllers/PostController';
+import { PostLikeController } from '../../presentation/controllers/PostLikeController';
 import { BookLikeController } from '../../presentation/controllers/BookLikeController';
 import { DashboardController } from '../../presentation/controllers/DashboardController';
 import { GetUserDashboardUseCase } from '../../application/usecases/GetUserDashboardUseCase';
@@ -44,8 +43,8 @@ export class Container {
   public readonly userRepository: UserRepository;
   public readonly bookRepository: BookRepository;
   public readonly readingStatusRepository: ReadingStatusRepository;
-  public readonly reviewRepository: ReviewRepository;
-  public readonly likeRepository: LikeRepository;
+  public readonly postRepository: PostRepository;
+  public readonly postLikeRepository: PostLikeRepository;
   public readonly bookLikeRepository: BookLikeRepository;
 
   // Infrastructure - Services
@@ -59,12 +58,11 @@ export class Container {
   public readonly upsertReadingStatusUseCase: UpsertReadingStatusUseCase;
   public readonly getReadingStatusUseCase: GetReadingStatusUseCase;
   public readonly getUserBooksByStatusUseCase: GetUserBooksByStatusUseCase;
-  public readonly createReviewUseCase: CreateReviewUseCase;
-  public readonly getBookReviewsUseCase: GetBookReviewsUseCase;
-  public readonly updateReviewUseCase: UpdateReviewUseCase;
-  public readonly deleteReviewUseCase: DeleteReviewUseCase;
-  public readonly toggleLikeUseCase: ToggleLikeUseCase;
-  public readonly getUserLikedReviewsUseCase: GetUserLikedReviewsUseCase;
+  public readonly createPostUseCase: CreatePostUseCase;
+  public readonly getBookPostsUseCase: GetBookPostsUseCase;
+  public readonly updatePostUseCase: UpdatePostUseCase;
+  public readonly deletePostUseCase: DeletePostUseCase;
+  public readonly togglePostLikeUseCase: TogglePostLikeUseCase;
   public readonly toggleBookLikeUseCase: ToggleBookLikeUseCase;
   public readonly getUserLikedBooksUseCase: GetUserLikedBooksUseCase;
   public readonly getBooksMetadataUseCase: GetBooksMetadataUseCase;
@@ -74,8 +72,8 @@ export class Container {
   // Controllers
   public readonly authController: AuthController;
   public readonly readingStatusController: ReadingStatusController;
-  public readonly reviewController: ReviewController;
-  public readonly likeController: LikeController;
+  public readonly postController: PostController;
+  public readonly postLikeController: PostLikeController;
   public readonly bookLikeController: BookLikeController;
   public readonly bookController: BookController;
   public readonly googleBooksController: GoogleBooksController;
@@ -86,8 +84,8 @@ export class Container {
     this.userRepository = new UserRepository(prisma);
     this.bookRepository = new BookRepository(prisma);
     this.readingStatusRepository = new ReadingStatusRepository(prisma);
-    this.reviewRepository = new ReviewRepository(prisma);
-    this.likeRepository = new LikeRepository(prisma);
+    this.postRepository = new PostRepository(prisma);
+    this.postLikeRepository = new PostLikeRepository(prisma);
     this.bookLikeRepository = new BookLikeRepository(prisma);
 
     // Infrastructure層 - Servicesの初期化
@@ -127,39 +125,31 @@ export class Container {
       this.bookLikeRepository
     );
 
-    this.createReviewUseCase = new CreateReviewUseCase(
-      this.reviewRepository,
+    this.createPostUseCase = new CreatePostUseCase(
+      this.postRepository,
       this.bookRepository,
       this.userRepository,
-      this.likeRepository
+      this.postLikeRepository
     );
 
-    this.getBookReviewsUseCase = new GetBookReviewsUseCase(
-      this.reviewRepository,
+    this.getBookPostsUseCase = new GetBookPostsUseCase(
+      this.postRepository,
       this.userRepository,
-      this.likeRepository,
+      this.postLikeRepository,
       this.bookRepository
     );
 
-    this.updateReviewUseCase = new UpdateReviewUseCase(
-      this.reviewRepository,
-      this.bookRepository
+    this.updatePostUseCase = new UpdatePostUseCase(
+      this.postRepository
     );
 
-    this.deleteReviewUseCase = new DeleteReviewUseCase(
-      this.reviewRepository,
-      this.bookRepository
+    this.deletePostUseCase = new DeletePostUseCase(
+      this.postRepository
     );
 
-    this.toggleLikeUseCase = new ToggleLikeUseCase(
-      this.likeRepository,
-      this.reviewRepository
-    );
-
-    this.getUserLikedReviewsUseCase = new GetUserLikedReviewsUseCase(
-      this.likeRepository,
-      this.reviewRepository,
-      this.userRepository
+    this.togglePostLikeUseCase = new TogglePostLikeUseCase(
+      this.postLikeRepository,
+      this.postRepository
     );
 
     this.toggleBookLikeUseCase = new ToggleBookLikeUseCase(
@@ -198,16 +188,15 @@ export class Container {
       this.getUserBooksByStatusUseCase
     );
 
-    this.reviewController = new ReviewController(
-      this.createReviewUseCase,
-      this.getBookReviewsUseCase,
-      this.updateReviewUseCase,
-      this.deleteReviewUseCase
+    this.postController = new PostController(
+      this.createPostUseCase,
+      this.getBookPostsUseCase,
+      this.updatePostUseCase,
+      this.deletePostUseCase
     );
 
-    this.likeController = new LikeController(
-      this.toggleLikeUseCase,
-      this.getUserLikedReviewsUseCase
+    this.postLikeController = new PostLikeController(
+      this.togglePostLikeUseCase
     );
 
     this.bookLikeController = new BookLikeController(
@@ -238,4 +227,3 @@ export class Container {
     return Container.instance;
   }
 }
-
