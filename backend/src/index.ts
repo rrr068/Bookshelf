@@ -10,6 +10,7 @@ import { createLikeRoutes } from './presentation/routes/likeRoutes.js';
 import { createBookLikeRoutes } from './presentation/routes/bookLikeRoutes.js';
 import { createBookRoutes } from './presentation/routes/bookRoutes.js';
 import { createGoogleBooksRoutes } from './presentation/routes/googleBooksRoutes.js';
+import { createDashboardRoutes } from './presentation/routes/dashboardRoutes.js';
 import { errorHandler } from './presentation/middlewares/errorHandler.js';
 
 // DIコンテナの初期化
@@ -69,6 +70,12 @@ const googleBooksRoutes = createGoogleBooksRoutes(
   container.googleBooksController
 );
 app.route('/api/google-books', googleBooksRoutes);
+
+const dashboardRoutes = createDashboardRoutes(
+  container.dashboardController,
+  container.jwtService
+);
+app.route('/api/dashboard', dashboardRoutes);
 
 // エラーハンドラー
 app.onError(errorHandler);

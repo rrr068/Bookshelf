@@ -30,6 +30,8 @@ import { ReadingStatusController } from '../../presentation/controllers/ReadingS
 import { ReviewController } from '../../presentation/controllers/ReviewController';
 import { LikeController } from '../../presentation/controllers/LikeController';
 import { BookLikeController } from '../../presentation/controllers/BookLikeController';
+import { DashboardController } from '../../presentation/controllers/DashboardController';
+import { GetUserDashboardUseCase } from '../../application/usecases/GetUserDashboardUseCase';
 
 /**
  * DIコンテナ
@@ -67,6 +69,7 @@ export class Container {
   public readonly getUserLikedBooksUseCase: GetUserLikedBooksUseCase;
   public readonly getBooksMetadataUseCase: GetBooksMetadataUseCase;
   public readonly searchGoogleBooksUseCase: SearchGoogleBooksUseCase;
+  public readonly getUserDashboardUseCase: GetUserDashboardUseCase;
 
   // Controllers
   public readonly authController: AuthController;
@@ -76,6 +79,7 @@ export class Container {
   public readonly bookLikeController: BookLikeController;
   public readonly bookController: BookController;
   public readonly googleBooksController: GoogleBooksController;
+  public readonly dashboardController: DashboardController;
 
   private constructor(prisma: PrismaClient) {
     // Infrastructure層 - Repositoriesの初期化
@@ -176,6 +180,11 @@ export class Container {
 
     this.searchGoogleBooksUseCase = new SearchGoogleBooksUseCase();
 
+    this.getUserDashboardUseCase = new GetUserDashboardUseCase(
+      this.readingStatusRepository,
+      this.bookRepository
+    );
+
     // Controllers層の初期化
     this.authController = new AuthController(
       this.registerUserUseCase,
@@ -212,6 +221,10 @@ export class Container {
 
     this.googleBooksController = new GoogleBooksController(
       this.searchGoogleBooksUseCase
+    );
+
+    this.dashboardController = new DashboardController(
+      this.getUserDashboardUseCase
     );
   }
 
