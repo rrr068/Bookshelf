@@ -22,8 +22,10 @@ import { GetUserLikedReviewsUseCase } from '../../application/usecases/GetUserLi
 import { ToggleBookLikeUseCase } from '../../application/usecases/ToggleBookLikeUseCase';
 import { GetUserLikedBooksUseCase } from '../../application/usecases/GetUserLikedBooksUseCase';
 import { GetBooksMetadataUseCase } from '../../application/usecases/GetBooksMetadataUseCase';
+import { SearchGoogleBooksUseCase } from '../../application/usecases/SearchGoogleBooksUseCase';
 import { AuthController } from '../../presentation/controllers/AuthController';
 import { BookController } from '../../presentation/controllers/BookController';
+import { GoogleBooksController } from '../../presentation/controllers/GoogleBooksController';
 import { ReadingStatusController } from '../../presentation/controllers/ReadingStatusController';
 import { ReviewController } from '../../presentation/controllers/ReviewController';
 import { LikeController } from '../../presentation/controllers/LikeController';
@@ -64,6 +66,7 @@ export class Container {
   public readonly toggleBookLikeUseCase: ToggleBookLikeUseCase;
   public readonly getUserLikedBooksUseCase: GetUserLikedBooksUseCase;
   public readonly getBooksMetadataUseCase: GetBooksMetadataUseCase;
+  public readonly searchGoogleBooksUseCase: SearchGoogleBooksUseCase;
 
   // Controllers
   public readonly authController: AuthController;
@@ -72,6 +75,7 @@ export class Container {
   public readonly likeController: LikeController;
   public readonly bookLikeController: BookLikeController;
   public readonly bookController: BookController;
+  public readonly googleBooksController: GoogleBooksController;
 
   private constructor(prisma: PrismaClient) {
     // Infrastructure層 - Repositoriesの初期化
@@ -170,6 +174,8 @@ export class Container {
       this.bookLikeRepository
     );
 
+    this.searchGoogleBooksUseCase = new SearchGoogleBooksUseCase();
+
     // Controllers層の初期化
     this.authController = new AuthController(
       this.registerUserUseCase,
@@ -202,6 +208,10 @@ export class Container {
 
     this.bookController = new BookController(
       this.getBooksMetadataUseCase
+    );
+
+    this.googleBooksController = new GoogleBooksController(
+      this.searchGoogleBooksUseCase
     );
   }
 
