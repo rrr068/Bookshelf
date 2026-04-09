@@ -28,7 +28,7 @@ export class LikeController {
 
   async getUserLikes(c: Context) {
     try {
-      const userId = c.req.param('userId');
+      const userId = c.req.param('userId') as string;
       const currentUserId = c.get('userId');
 
       const result = await this.getUserLikedReviewsUseCase.execute(userId, currentUserId);

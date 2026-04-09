@@ -3,7 +3,7 @@
  */
 export interface CreateReviewRequestDto {
   bookId: string;
-  rating: number;
+  rating?: number;
   comment?: string;
 }
 
@@ -22,7 +22,7 @@ export interface ReviewResponseDto {
   id: string;
   userId: string;
   bookId: string;
-  rating: number;
+  rating: number | null;
   comment: string | null;
   createdAt: string;
   updatedAt: string;

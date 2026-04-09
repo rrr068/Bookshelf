@@ -7,7 +7,7 @@ export class Review {
     public readonly id: string,
     public readonly userId: string,
     public readonly bookId: string,
-    public readonly rating: number,
+    public readonly rating: number | null,
     public readonly comment: string | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date
@@ -34,10 +34,10 @@ export class Review {
   static create(
     userId: string,
     bookId: string,
-    rating: number,
+    rating: number | undefined,
     comment: string | null = null
   ): Review {
-    if (!this.isValidRating(rating)) {
+    if (rating !== undefined && !this.isValidRating(rating)) {
       throw new Error('Rating must be between 1 and 5');
     }
 
@@ -49,7 +49,7 @@ export class Review {
       '',
       userId,
       bookId,
-      rating,
+      rating ?? null,
       comment,
       new Date(),
       new Date()
@@ -59,8 +59,8 @@ export class Review {
   /**
    * レビューを更新
    */
-  update(rating: number, comment: string | null): Review {
-    if (!Review.isValidRating(rating)) {
+  update(rating: number | undefined, comment: string | null): Review {
+    if (rating !== undefined && !Review.isValidRating(rating)) {
       throw new Error('Rating must be between 1 and 5');
     }
 
@@ -72,7 +72,7 @@ export class Review {
       this.id,
       this.userId,
       this.bookId,
-      rating,
+      rating ?? null,
       comment,
       this.createdAt,
       new Date()
