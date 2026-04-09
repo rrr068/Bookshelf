@@ -19,6 +19,7 @@ export const createAuthRoutes = (
 
   // 保護されたエンドポイント
   app.get('/me', authMiddleware, (c) => authController.getCurrentUser(c));
+  app.put('/profile', authMiddleware, (c) => authController.updateProfile(c));
 
   return app;
 };

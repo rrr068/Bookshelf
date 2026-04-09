@@ -18,6 +18,7 @@ import { GetBookPostsUseCase } from '../../application/usecases/GetBookPostsUseC
 import { GetTimelineUseCase } from '../../application/usecases/GetTimelineUseCase';
 import { UpdatePostUseCase } from '../../application/usecases/UpdatePostUseCase';
 import { DeletePostUseCase } from '../../application/usecases/DeletePostUseCase';
+import { UpdateUserUseCase } from '../../application/usecases/UpdateUserUseCase';
 import { TogglePostLikeUseCase } from '../../application/usecases/TogglePostLikeUseCase';
 import { ToggleBookLikeUseCase } from '../../application/usecases/ToggleBookLikeUseCase';
 import { GetUserLikedBooksUseCase } from '../../application/usecases/GetUserLikedBooksUseCase';
@@ -57,6 +58,7 @@ export class Container {
   public readonly registerUserUseCase: RegisterUserUseCase;
   public readonly loginUserUseCase: LoginUserUseCase;
   public readonly getCurrentUserUseCase: GetCurrentUserUseCase;
+  public readonly updateUserUseCase: UpdateUserUseCase;
   public readonly upsertReadingStatusUseCase: UpsertReadingStatusUseCase;
   public readonly getReadingStatusUseCase: GetReadingStatusUseCase;
   public readonly getUserBooksByStatusUseCase: GetUserBooksByStatusUseCase;
@@ -111,6 +113,11 @@ export class Container {
 
     this.getCurrentUserUseCase = new GetCurrentUserUseCase(
       this.userRepository
+    );
+
+    this.updateUserUseCase = new UpdateUserUseCase(
+      this.userRepository,
+      this.passwordHasher
     );
 
     this.upsertReadingStatusUseCase = new UpsertReadingStatusUseCase(
@@ -197,7 +204,8 @@ export class Container {
     this.authController = new AuthController(
       this.registerUserUseCase,
       this.loginUserUseCase,
-      this.getCurrentUserUseCase
+      this.getCurrentUserUseCase,
+      this.updateUserUseCase
     );
 
     this.readingStatusController = new ReadingStatusController(

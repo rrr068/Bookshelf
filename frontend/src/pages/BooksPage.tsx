@@ -188,7 +188,7 @@ export function BooksPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate('/dashboard')}
               >
                 {user?.username} さん
               </Button>

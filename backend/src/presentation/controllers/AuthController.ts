@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { RegisterUserUseCase } from '../../application/usecases/RegisterUserUseCase';
 import { LoginUserUseCase } from '../../application/usecases/LoginUserUseCase';
 import { GetCurrentUserUseCase } from '../../application/usecases/GetCurrentUserUseCase';
+import { UpdateUserUseCase } from '../../application/usecases/UpdateUserUseCase';
 import { registerSchema, loginSchema } from '../validators/authValidator';
 
 /**
@@ -12,7 +13,8 @@ export class AuthController {
   constructor(
     private readonly registerUserUseCase: RegisterUserUseCase,
     private readonly loginUserUseCase: LoginUserUseCase,
-    private readonly getCurrentUserUseCase: GetCurrentUserUseCase
+    private readonly getCurrentUserUseCase: GetCurrentUserUseCase,
+    private readonly updateUserUseCase: UpdateUserUseCase
   ) {}
 
   /**
@@ -82,6 +84,25 @@ export class AuthController {
         },
         401
       );
+    }
+  }
+
+  /**
+   * ユーザー情報更新
+   * PUT /api/auth/profile
+   */
+  async updateProfile(c: Context) {
+    try {
+      const userId = c.get('userId');
+      const body = await c.req.json();
+      const result = await this.updateUserUseCase.execute(userId, {
+        username: body.username,
+        currentPassword: body.currentPassword,
+        newPassword: body.newPassword,
+      });
+      return c.json(result, 200);
+    } catch (error: any) {
+      return c.json({ error: error.message || 'Failed to update profile' }, 400);
     }
   }
 
