@@ -33,7 +33,7 @@ export function SignupPage() {
   // 既にログイン済みの場合は一覧ページにリダイレクト
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -65,7 +65,7 @@ export function SignupPage() {
       login(response.user);
 
       // 本の一覧ページに遷移
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
       setError(err.message || '登録に失敗しました');
     } finally {

@@ -18,9 +18,9 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // 未認証の場合はサインアップページにリダイレクト
+  // 未認証の場合はログインページにリダイレクト
   if (!isAuthenticated) {
-    return <Navigate to="/signup" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

@@ -224,7 +224,7 @@ export function BookDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
         <p className="text-gray-600">本が見つかりません</p>
-        <Button onClick={() => navigate('/')}>一覧に戻る</Button>
+        <Button onClick={() => navigate('/books')}>一覧に戻る</Button>
       </div>
     );
   }
