@@ -24,7 +24,7 @@ export function BooksPage() {
   const navigate = useNavigate();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<BookCategory>('おすすめ');
+  const [selectedCategory, setSelectedCategory] = useState<BookCategory>('全て');
   const [searchQuery, setSearchQuery] = useState('');
   const [quotaError, setQuotaError] = useState(false);
 
@@ -182,7 +182,7 @@ export function BooksPage() {
               className="text-2xl font-bold text-gray-900 cursor-pointer"
               onClick={() => navigate('/dashboard')}
             >
-              📚 Bookshelf
+              BookMark
             </h1>
             <div className="flex items-center gap-4">
               <Button
@@ -227,7 +227,7 @@ export function BooksPage() {
               <SelectContent>
                 {BookCategories.map((category) => (
                   <SelectItem key={category} value={category}>
-                    {category === 'おすすめ' ? '⭐ おすすめ' : category}
+                    {category}
                   </SelectItem>
                 ))}
               </SelectContent>

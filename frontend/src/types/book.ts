@@ -70,7 +70,6 @@ export const ReadingStatusLabel: Record<ReadingStatus, string> = {
  * 本のカテゴリー（ジャンル）
  */
 export const BookCategories = [
-  'おすすめ',
   '全て',
   '文学・小説',
   'ビジネス',

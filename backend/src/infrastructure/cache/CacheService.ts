@@ -15,9 +15,11 @@ interface MemoryCacheEntry {
 export class CacheService {
   private defaultTTL = 60 * 60; // 1時間（秒単位）
   private memoryCache = new Map<string, MemoryCacheEntry>();
-  private redisAvailable = true;
+  private redisAvailable = redis !== null;
 
   constructor() {
+    if (!redis) return;
+
     // Redis の接続状態を監視
     redis.on('error', () => {
       if (this.redisAvailable) {
@@ -63,7 +65,7 @@ export class CacheService {
    * キャッシュから値を取得
    */
   async get<T>(key: string): Promise<T | null> {
-    if (!this.redisAvailable) {
+    if (!this.redisAvailable || !redis) {
       return this.memGet<T>(key);
     }
     try {
@@ -81,7 +83,7 @@ export class CacheService {
    */
   async set(key: string, value: any, ttl?: number): Promise<void> {
     const effectiveTTL = ttl || this.defaultTTL;
-    if (!this.redisAvailable) {
+    if (!this.redisAvailable || !redis) {
       this.memSet(key, value, effectiveTTL);
       return;
     }
@@ -99,7 +101,7 @@ export class CacheService {
    */
   async delete(key: string): Promise<void> {
     this.memoryCache.delete(key);
-    if (!this.redisAvailable) return;
+    if (!this.redisAvailable || !redis) return;
     try {
       await redis.del(key);
     } catch (error) {
@@ -111,12 +113,11 @@ export class CacheService {
    * パターンに一致するキーをすべて削除
    */
   async deletePattern(pattern: string): Promise<void> {
-    // インメモリキャッシュからも削除
     const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
     for (const key of this.memoryCache.keys()) {
       if (regex.test(key)) this.memoryCache.delete(key);
     }
-    if (!this.redisAvailable) return;
+    if (!this.redisAvailable || !redis) return;
     try {
       const keys = await redis.keys(pattern);
       if (keys.length > 0) {
@@ -131,7 +132,7 @@ export class CacheService {
    * キャッシュが存在するかチェック
    */
   async exists(key: string): Promise<boolean> {
-    if (!this.redisAvailable) {
+    if (!this.redisAvailable || !redis) {
       return this.memGet(key) !== null;
     }
     try {
