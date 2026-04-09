@@ -22,8 +22,8 @@ model User {
   // リレーション
   books          Book[]
   readingStatuses ReadingStatus[]
-  reviews        Review[]
-  likes          Like[]
+  posts          Post[]
+  postLikes      PostLike[]
   bookLikes      BookLike[]
 
   @@index([email])
@@ -51,7 +51,7 @@ model Book {
   // リレーション
   creator        User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   readingStatuses ReadingStatus[]
-  reviews        Review[]
+  posts          Post[]
   bookLikes      BookLike[]
 
   @@index([googleBooksId])
@@ -82,43 +82,44 @@ model ReadingStatus {
   @@map("reading_statuses")
 }
 
-// レビューテーブル
-model Review {
+// 投稿テーブル（書籍感想）
+model Post {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   bookId    String   @map("book_id")
+  title     String
+  body      String
   rating    Int?     // 1-5（オプショナル）
-  comment   String?
+  spoiler   Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // リレーション
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  likes     Like[]
+  postLikes PostLike[]
 
-  @@unique([userId, bookId])
   @@index([bookId])
   @@index([userId])
   @@index([createdAt(sort: Desc)])
-  @@map("reviews")
+  @@map("posts")
 }
 
-// いいねテーブル（レビューへのいいね）
-model Like {
+// 投稿いいねテーブル
+model PostLike {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  reviewId  String   @map("review_id")
+  postId    String   @map("post_id")
   createdAt DateTime @default(now()) @map("created_at")
 
   // リレーション
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, reviewId])
-  @@index([reviewId])
+  @@unique([userId, postId])
+  @@index([postId])
   @@index([userId])
-  @@map("likes")
+  @@map("post_likes")
 }
 
 // 本へのいいねテーブル
