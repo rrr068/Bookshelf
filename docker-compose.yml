@@ -8,9 +8,10 @@ services:
     container_name: bookshelf-backend
     environment:
       NODE_ENV: development
-      DATABASE_PATH: /app/data/bookshelf.db
+      DATABASE_URL: file:/app/data/bookshelf.db
       JWT_SECRET: your-secret-key-change-in-production
       GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
+      REDIS_URL: redis://redis:6379
       PORT: 3000
     ports:
       - "3000:3000"
@@ -18,6 +19,8 @@ services:
       - ./backend:/app
       - /app/node_modules
       - sqlite_data:/app/data
+    depends_on:
+      - redis
     networks:
       - bookshelf-network
 
@@ -38,8 +41,20 @@ services:
     networks:
       - bookshelf-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: bookshelf-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - bookshelf-network
+    command: redis-server --appendonly yes
+
 volumes:
   sqlite_data:
+  redis_data:
 
 networks:
   bookshelf-network:
