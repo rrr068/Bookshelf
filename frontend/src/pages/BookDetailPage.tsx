@@ -1,54 +1,57 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Book } from '@/types/book';
-import { Review } from '@/types/review';
+import { Post, UpdatePostRequest } from '@/types/post';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { createReview, updateReview, deleteReview, toggleLike, getBookReviews } from '@/services/reviewService';
+import { createPost, getBookPosts, updatePost, deletePost, togglePostLike } from '@/services/postService';
 import { updateReadingStatus, getReadingStatus } from '@/services/readingStatusService';
 import { ReadingStatus, ReadingStatusLabel } from '@/types/readingStatus';
 import { useAuth } from '@/contexts/AuthContext';
 
-/**
- * 本の詳細ページ
- * location.stateから本のデータを受け取る
- */
 export function BookDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
 
-  // location.stateから本のデータを取得
   const book = (location.state as { book?: Book })?.book || null;
 
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [rating, setRating] = useState<number | null>(null);
-  const [comment, setComment] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<ReadingStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
-  const [hasReview, setHasReview] = useState(false);
 
-  /**
-   * ページ読み込み時に読書ステータスとレビューを取得
-   */
+  // 新規投稿フォーム
+  const [formTitle, setFormTitle] = useState('');
+  const [formBody, setFormBody] = useState('');
+  const [formRating, setFormRating] = useState<number | null>(null);
+  const [formSpoiler, setFormSpoiler] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+
+  // 編集中の投稿
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editBody, setEditBody] = useState('');
+  const [editRating, setEditRating] = useState<number | null>(null);
+  const [editSpoiler, setEditSpoiler] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+
+  // ネタバレ表示トグル
+  const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     if (book) {
       loadReadingStatus();
-      loadReviews();
+      loadPosts();
     }
   }, [book]);
 
   const loadReadingStatus = async () => {
     if (!book) return;
-
     setStatusLoading(true);
     try {
       const status = await getReadingStatus(book.googleBooksId);
-      if (status) {
-        setSelectedStatus(status.status);
-      }
+      if (status) setSelectedStatus(status.status);
     } catch (error) {
       console.error('Failed to load reading status:', error);
     } finally {
@@ -56,148 +59,120 @@ export function BookDetailPage() {
     }
   };
 
-  /**
-   * レビュー一覧を読み込む
-   */
-  const loadReviews = async () => {
-    if (!book || !user) return;
-
+  const loadPosts = async () => {
+    if (!book) return;
     try {
-      const bookReviews = await getBookReviews(book.googleBooksId);
-      setReviews(bookReviews);
-
-      // 自分のレビューがあるかチェック
-      const myReview = bookReviews.find(r => r.userId === user.id);
-      if (myReview) {
-        setHasReview(true);
-        setRating(myReview.rating);
-        setComment(myReview.comment || '');
-      }
+      const bookPosts = await getBookPosts(book.googleBooksId);
+      setPosts(bookPosts);
     } catch (error) {
-      console.error('Failed to load reviews:', error);
+      console.error('Failed to load posts:', error);
     }
   };
 
-  /**
-   * レビュー投稿または更新
-   */
-  const submitReview = async (ratingValue?: number) => {
-    if (!book) return;
-
-    setLoading(true);
-    try {
-      if (hasReview) {
-        // 既存レビューを更新
-        await updateReview(book.googleBooksId, {
-          rating: ratingValue || undefined,
-          comment: comment || undefined,
-        });
-      } else {
-        // 新規レビューを作成
-        await createReview({
-          bookId: book.googleBooksId,
-          rating: ratingValue || undefined,
-          comment: comment || undefined,
-          bookData: {
-            googleBooksId: book.googleBooksId,
-            title: book.title,
-            authors: book.authors,
-            publisher: book.publisher,
-            publishedDate: book.publishedDate,
-            description: book.description,
-            isbn10: book.isbn10,
-            isbn13: book.isbn13,
-            pageCount: book.pageCount,
-            thumbnailUrl: book.thumbnailUrl,
-            language: book.language,
-          },
-        });
-        setHasReview(true);
-      }
-
-      // レビュー一覧を再読み込み
-      await loadReviews();
-
-      setRating(ratingValue || null);
-    } catch (error: any) {
-      alert(error.message || 'レビューの投稿に失敗しました');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /**
-   * レビューフォーム送信（感想のみ）
-   */
-  const handleSubmitReview = async (e: React.FormEvent) => {
+  const handleSubmitPost = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submitReview(rating || undefined);
-  };
+    if (!book || !formTitle.trim() || !formBody.trim()) return;
 
-  /**
-   * 星をクリックした時点でレビューを投稿/更新
-   */
-  const handleRatingClick = async (star: number) => {
-    setRating(star);
-    await submitReview(star);
-  };
-
-  /**
-   * 評価をクリア（レビューを削除）
-   */
-  const handleClearRating = async () => {
-    if (!book) return;
-    if (!hasReview) {
-      setRating(null);
-      return;
-    }
-
-    setLoading(true);
+    setFormLoading(true);
     try {
-      await deleteReview(book.googleBooksId);
-      setRating(null);
-      setComment('');
-      setHasReview(false);
-
-      // レビュー一覧を再読み込み
-      await loadReviews();
+      await createPost({
+        bookId: book.googleBooksId,
+        title: formTitle.trim(),
+        body: formBody.trim(),
+        rating: formRating ?? undefined,
+        spoiler: formSpoiler,
+        bookData: {
+          googleBooksId: book.googleBooksId,
+          title: book.title,
+          authors: book.authors,
+          publisher: book.publisher,
+          publishedDate: book.publishedDate,
+          description: book.description,
+          isbn10: book.isbn10,
+          isbn13: book.isbn13,
+          pageCount: book.pageCount,
+          thumbnailUrl: book.thumbnailUrl,
+          language: book.language,
+        },
+      });
+      setFormTitle('');
+      setFormBody('');
+      setFormRating(null);
+      setFormSpoiler(false);
+      await loadPosts();
     } catch (error: any) {
-      alert(error.message || '評価のクリアに失敗しました');
+      alert(error.message || '投稿に失敗しました');
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
 
-  /**
-   * いいねトグル
-   */
-  const handleToggleLike = async (reviewId: string) => {
-    try {
-      const result = await toggleLike(reviewId);
+  const startEditing = (post: Post) => {
+    setEditingPostId(post.id);
+    setEditTitle(post.title);
+    setEditBody(post.body);
+    setEditRating(post.rating);
+    setEditSpoiler(post.spoiler);
+  };
 
-      // レビューのいいね数を更新
-      setReviews(
-        reviews.map((review) =>
-          review.id === reviewId
-            ? {
-                ...review,
-                likesCount: result.likesCount,
-                isLikedByCurrentUser: result.liked,
-              }
-            : review
-        )
-      );
+  const cancelEditing = () => {
+    setEditingPostId(null);
+  };
+
+  const handleUpdatePost = async (postId: string) => {
+    if (!editTitle.trim() || !editBody.trim()) return;
+    setEditLoading(true);
+    try {
+      const data: UpdatePostRequest = {
+        title: editTitle.trim(),
+        body: editBody.trim(),
+        rating: editRating ?? undefined,
+        spoiler: editSpoiler,
+      };
+      await updatePost(postId, data);
+      setEditingPostId(null);
+      await loadPosts();
+    } catch (error: any) {
+      alert(error.message || '更新に失敗しました');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm('この投稿を削除しますか？')) return;
+    try {
+      await deletePost(postId);
+      await loadPosts();
+    } catch (error: any) {
+      alert(error.message || '削除に失敗しました');
+    }
+  };
+
+  const handleToggleLike = async (postId: string) => {
+    try {
+      const result = await togglePostLike(postId);
+      setPosts(posts.map((p) =>
+        p.id === postId
+          ? { ...p, likesCount: result.likesCount, isLikedByCurrentUser: result.liked }
+          : p
+      ));
     } catch (error: any) {
       alert(error.message || 'いいねに失敗しました');
     }
   };
 
-  /**
-   * 読書ステータス更新
-   */
+  const toggleSpoilerReveal = (postId: string) => {
+    setRevealedSpoilers((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+  };
+
   const handleStatusChange = async (status: ReadingStatus) => {
     if (!book) return;
-
     try {
       await updateReadingStatus(book.googleBooksId, status, {
         googleBooksId: book.googleBooksId,
@@ -213,10 +188,8 @@ export function BookDetailPage() {
         language: book.language,
       });
       setSelectedStatus(status);
-      alert(`「${ReadingStatusLabel[status]}」に設定しました！`);
     } catch (error: any) {
       alert(error.message || 'ステータスの更新に失敗しました');
-      console.error('Failed to update status:', error);
     }
   };
 
@@ -231,7 +204,6 @@ export function BookDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ヘッダー */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Button variant="ghost" onClick={() => navigate(-1)}>
@@ -241,11 +213,10 @@ export function BookDetailPage() {
       </header>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 本の情報セクション */}
+        {/* 本の情報 */}
         <Card className="mb-8">
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* 本の画像 */}
               <div className="md:col-span-1">
                 {book.thumbnailUrl ? (
                   <img
@@ -259,13 +230,9 @@ export function BookDetailPage() {
                   </div>
                 )}
               </div>
-
-              {/* 本の詳細情報 */}
               <div className="md:col-span-2">
                 <h1 className="text-3xl font-bold mb-3">{book.title}</h1>
                 <p className="text-lg text-gray-600 mb-4">{book.authors.join(', ')}</p>
-
-                {/* 書籍情報 */}
                 <div className="text-sm text-gray-600 mb-6 space-y-1">
                   {book.publisher && <p>📚 出版社: {book.publisher}</p>}
                   {book.publishedDate && <p>📅 出版日: {book.publishedDate}</p>}
@@ -279,26 +246,24 @@ export function BookDetailPage() {
                   {statusLoading ? (
                     <p className="text-sm text-gray-500">読み込み中...</p>
                   ) : selectedStatus ? (
-                    <div className="text-sm font-medium text-green-600 mb-2">
+                    <p className="text-sm font-medium text-green-600 mb-2">
                       現在: {ReadingStatusLabel[selectedStatus]}
-                    </div>
+                    </p>
                   ) : (
                     <p className="text-sm text-gray-500 mb-2">未設定</p>
                   )}
                   <div className="flex gap-2">
-                    {(['want_to_read', 'reading', 'completed'] as ReadingStatus[]).map(
-                      (status) => (
-                        <Button
-                          key={status}
-                          variant={selectedStatus === status ? 'default' : 'outline'}
-                          onClick={() => handleStatusChange(status)}
-                          className="flex-1"
-                          disabled={statusLoading}
-                        >
-                          {ReadingStatusLabel[status]}
-                        </Button>
-                      )
-                    )}
+                    {(['want_to_read', 'reading', 'completed'] as ReadingStatus[]).map((status) => (
+                      <Button
+                        key={status}
+                        variant={selectedStatus === status ? 'default' : 'outline'}
+                        onClick={() => handleStatusChange(status)}
+                        className="flex-1"
+                        disabled={statusLoading}
+                      >
+                        {ReadingStatusLabel[status]}
+                      </Button>
+                    ))}
                   </div>
                 </div>
 
@@ -313,112 +278,231 @@ export function BookDetailPage() {
           </CardContent>
         </Card>
 
-        {/* レビューセクション */}
+        {/* 投稿セクション */}
         <div className="space-y-6">
-          {/* レビュー投稿フォーム */}
+          {/* 投稿フォーム */}
           <Card>
-              <CardHeader>
-                <CardTitle>レビューを投稿</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmitReview} className="space-y-4">
-                  <div>
-                    <Label htmlFor="rating">評価（星をクリックで即座に確定）</Label>
-                    <div className="flex gap-2 mt-2 items-center">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => handleRatingClick(star)}
-                          className={`text-2xl ${
-                            rating && star <= rating ? 'text-yellow-500' : 'text-gray-300'
-                          }`}
-                          disabled={loading}
-                        >
-                          ★
-                        </button>
-                      ))}
-                      {rating && (
-                        <button
-                          type="button"
-                          onClick={handleClearRating}
-                          className="ml-2 text-sm text-gray-500 hover:text-gray-700"
-                          disabled={loading}
-                        >
-                          クリア
-                        </button>
-                      )}
-                    </div>
+            <CardHeader>
+              <CardTitle>感想を投稿</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmitPost} className="space-y-4">
+                <div>
+                  <Label htmlFor="post-title">タイトル</Label>
+                  <input
+                    id="post-title"
+                    type="text"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    className="w-full p-2 border rounded-md mt-1"
+                    placeholder="タイトルを入力..."
+                    maxLength={200}
+                    disabled={formLoading}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="post-body">感想</Label>
+                  <textarea
+                    id="post-body"
+                    value={formBody}
+                    onChange={(e) => setFormBody(e.target.value)}
+                    className="w-full min-h-[120px] p-2 border rounded-md mt-1"
+                    placeholder="この本の感想を書いてください..."
+                    maxLength={5000}
+                    disabled={formLoading}
+                  />
+                </div>
+
+                <div>
+                  <Label>評価（任意）</Label>
+                  <div className="flex gap-2 mt-1 items-center">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setFormRating(formRating === star ? null : star)}
+                        className={`text-2xl ${formRating && star <= formRating ? 'text-yellow-500' : 'text-gray-300'}`}
+                        disabled={formLoading}
+                      >
+                        ★
+                      </button>
+                    ))}
+                    {formRating && (
+                      <button
+                        type="button"
+                        onClick={() => setFormRating(null)}
+                        className="ml-1 text-sm text-gray-500 hover:text-gray-700"
+                        disabled={formLoading}
+                      >
+                        クリア
+                      </button>
+                    )}
                   </div>
+                </div>
 
-                  <div>
-                    <Label htmlFor="comment">感想（任意）</Label>
-                    <textarea
-                      id="comment"
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      className="w-full min-h-[100px] p-2 border rounded-md"
-                      placeholder="この本の感想を書いてください..."
-                      disabled={loading}
-                    />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="spoiler"
+                    type="checkbox"
+                    checked={formSpoiler}
+                    onChange={(e) => setFormSpoiler(e.target.checked)}
+                    disabled={formLoading}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="spoiler">ネタバレを含む</Label>
+                </div>
 
-                  <Button type="submit" disabled={loading || !comment.trim()} className="w-full">
-                    {loading ? '投稿中...' : hasReview ? '感想を更新' : '感想を投稿'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                <Button
+                  type="submit"
+                  disabled={formLoading || !formTitle.trim() || !formBody.trim()}
+                  className="w-full"
+                >
+                  {formLoading ? '投稿中...' : '投稿する'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-          {/* レビュー一覧 */}
+          {/* 投稿一覧 */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">レビュー ({reviews.length})</h2>
-            {reviews.length === 0 ? (
+            <h2 className="text-xl font-bold">感想 ({posts.length})</h2>
+            {posts.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-gray-500">
-                  まだレビューがありません
+                  まだ投稿がありません
                 </CardContent>
               </Card>
             ) : (
-              reviews.map((review) => (
-                <Card key={review.id}>
+              posts.map((post) => (
+                <Card key={post.id}>
                   <CardContent className="pt-6">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="font-semibold">{review.user.username}</p>
-                        {review.rating ? (
-                          <div className="flex gap-1">
-                            {Array.from({ length: 5 }, (_, i) => (
-                              <span
-                                key={i}
-                                className={
-                                  i < review.rating!
-                                    ? 'text-yellow-500'
-                                    : 'text-gray-300'
-                                }
-                              >
-                                ★
+                    {editingPostId === post.id ? (
+                      // 編集フォーム
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="w-full p-2 border rounded-md"
+                          maxLength={200}
+                          disabled={editLoading}
+                        />
+                        <textarea
+                          value={editBody}
+                          onChange={(e) => setEditBody(e.target.value)}
+                          className="w-full min-h-[100px] p-2 border rounded-md"
+                          maxLength={5000}
+                          disabled={editLoading}
+                        />
+                        <div className="flex gap-2 items-center">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setEditRating(editRating === star ? null : star)}
+                              className={`text-xl ${editRating && star <= editRating ? 'text-yellow-500' : 'text-gray-300'}`}
+                              disabled={editLoading}
+                            >
+                              ★
+                            </button>
+                          ))}
+                          {editRating && (
+                            <button
+                              type="button"
+                              onClick={() => setEditRating(null)}
+                              className="text-sm text-gray-500 hover:text-gray-700"
+                              disabled={editLoading}
+                            >
+                              クリア
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={editSpoiler}
+                            onChange={(e) => setEditSpoiler(e.target.checked)}
+                            disabled={editLoading}
+                            className="h-4 w-4"
+                          />
+                          <span className="text-sm text-gray-600">ネタバレを含む</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleUpdatePost(post.id)}
+                            disabled={editLoading || !editTitle.trim() || !editBody.trim()}
+                          >
+                            {editLoading ? '更新中...' : '保存'}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={cancelEditing} disabled={editLoading}>
+                            キャンセル
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      // 通常表示
+                      <>
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-semibold text-sm text-gray-500">{post.user.username}</p>
+                            <h3 className="font-bold text-lg">{post.title}</h3>
+                            {post.rating && (
+                              <div className="flex gap-0.5 mt-1">
+                                {Array.from({ length: 5 }, (_, i) => (
+                                  <span key={i} className={i < post.rating! ? 'text-yellow-500' : 'text-gray-300'}>
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {post.spoiler && (
+                              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                                ネタバレ
                               </span>
-                            ))}
+                            )}
+                            <Button
+                              size="sm"
+                              variant={post.isLikedByCurrentUser ? 'default' : 'outline'}
+                              onClick={() => handleToggleLike(post.id)}
+                            >
+                              ❤️ {post.likesCount}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {post.spoiler && !revealedSpoilers.has(post.id) ? (
+                          <div className="bg-gray-100 rounded p-3 text-center">
+                            <p className="text-sm text-gray-500 mb-2">ネタバレを含む投稿です</p>
+                            <Button size="sm" variant="outline" onClick={() => toggleSpoilerReveal(post.id)}>
+                              表示する
+                            </Button>
                           </div>
                         ) : (
-                          <p className="text-xs text-gray-500">評価なし</p>
+                          <p className="text-gray-700 whitespace-pre-wrap mt-2">{post.body}</p>
                         )}
-                      </div>
-                      <Button
-                        size="sm"
-                        variant={review.isLikedByCurrentUser ? 'default' : 'outline'}
-                        onClick={() => handleToggleLike(review.id)}
-                      >
-                        ❤️ {review.likesCount}
-                      </Button>
-                    </div>
-                    {review.comment && (
-                      <p className="text-gray-700 mt-2">{review.comment}</p>
+
+                        <div className="flex justify-between items-center mt-3">
+                          <p className="text-xs text-gray-400">
+                            {new Date(post.createdAt).toLocaleDateString('ja-JP')}
+                            {post.updatedAt !== post.createdAt && ' (編集済み)'}
+                          </p>
+                          {user && post.userId === user.id && (
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" onClick={() => startEditing(post)}>
+                                編集
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => handleDeletePost(post.id)}>
+                                削除
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </>
                     )}
-                    <p className="text-xs text-gray-500 mt-2">
-                      {new Date(review.createdAt).toLocaleDateString('ja-JP')}
-                    </p>
                   </CardContent>
                 </Card>
               ))

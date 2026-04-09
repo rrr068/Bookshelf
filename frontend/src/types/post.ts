@@ -1,12 +1,14 @@
 /**
- * レビューの型定義
+ * 投稿の型定義
  */
-export interface Review {
+export interface Post {
   id: string;
   userId: string;
   bookId: string;
+  title: string;
+  body: string;
   rating: number | null;
-  comment: string | null;
+  spoiler: boolean;
   createdAt: string;
   updatedAt: string;
   user: {
@@ -18,12 +20,14 @@ export interface Review {
 }
 
 /**
- * レビュー作成リクエスト
+ * 投稿作成リクエスト
  */
-export interface CreateReviewRequest {
+export interface CreatePostRequest {
   bookId: string;
+  title: string;
+  body: string;
   rating?: number;
-  comment?: string;
+  spoiler?: boolean;
   bookData?: {
     googleBooksId: string;
     title: string;
@@ -37,4 +41,14 @@ export interface CreateReviewRequest {
     thumbnailUrl?: string;
     language?: string;
   };
+}
+
+/**
+ * 投稿更新リクエスト
+ */
+export interface UpdatePostRequest {
+  title: string;
+  body: string;
+  rating?: number;
+  spoiler?: boolean;
 }

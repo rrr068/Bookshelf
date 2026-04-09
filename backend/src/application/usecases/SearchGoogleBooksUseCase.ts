@@ -54,16 +54,19 @@ export class SearchGoogleBooksUseCase {
 
     // Google Books APIにリクエスト
     try {
-      const response = await axios.get<GoogleBooksResponse>(this.apiUrl, {
-        params: {
-          q: query,
-          maxResults,
-          startIndex,
-          langRestrict: 'ja',
-          orderBy: 'relevance',
-          country: 'JP',
-        },
-      });
+      const params: Record<string, any> = {
+        q: query,
+        maxResults,
+        startIndex,
+        langRestrict: 'ja',
+        orderBy: 'relevance',
+        country: 'JP',
+      };
+      if (process.env.GOOGLE_BOOKS_API_KEY) {
+        params.key = process.env.GOOGLE_BOOKS_API_KEY;
+      }
+
+      const response = await axios.get<GoogleBooksResponse>(this.apiUrl, { params });
 
       // 結果を通常キャッシュと期限なしのstaleキャッシュ両方に保存
       await cacheService.set(cacheKey, response.data, this.cacheTTL);
