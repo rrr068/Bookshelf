@@ -8,6 +8,13 @@ import { Book, BookCategories, BookCategory } from '@/types/book';
 import { searchBooks, searchBooksByCategory, getFeaturedBooks } from '@/services/bookService';
 import { toggleBookLike } from '@/services/bookLikeService';
 import { getBooksMetadata } from '@/services/bookMetadataService';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 /**
  * 本の一覧ページ（Filmarksライクなデザイン）
@@ -19,6 +26,7 @@ export function BooksPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<BookCategory>('おすすめ');
   const [searchQuery, setSearchQuery] = useState('');
+  const [quotaError, setQuotaError] = useState(false);
 
   /**
    * 初期表示：人気の本を取得
@@ -42,6 +50,7 @@ export function BooksPage() {
    */
   const loadBooks = async () => {
     setLoading(true);
+    setQuotaError(false);
     try {
       const result = selectedCategory === '全て'
         ? await getFeaturedBooks(40)
@@ -68,8 +77,11 @@ export function BooksPage() {
       });
 
       setBooks(sortedBooks);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load books:', error);
+      if (error.message === 'QUOTA_EXCEEDED') {
+        setQuotaError(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -83,6 +95,7 @@ export function BooksPage() {
     if (!searchQuery.trim()) return;
 
     setLoading(true);
+    setQuotaError(false);
     try {
       const result = await searchBooks(searchQuery, 40);
 
@@ -108,8 +121,11 @@ export function BooksPage() {
 
       setBooks(sortedBooks);
       setSelectedCategory('全て');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to search books:', error);
+      if (error.message === 'QUOTA_EXCEEDED') {
+        setQuotaError(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -196,22 +212,23 @@ export function BooksPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* カテゴリーフィルター */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2">
-            {BookCategories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleCategoryChange(category)}
-                className={`whitespace-nowrap ${
-                  category === 'おすすめ' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600' : ''
-                } ${
-                  selectedCategory === category && category === 'おすすめ' ? 'ring-2 ring-purple-300' : ''
-                }`}
-              >
-                {category === 'おすすめ' ? '⭐ おすすめ' : category}
-              </Button>
-            ))}
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700">ジャンル:</label>
+            <Select
+              value={selectedCategory}
+              onValueChange={(value: string) => handleCategoryChange(value as BookCategory)}
+            >
+              <SelectTrigger className="w-[240px]">
+                <SelectValue placeholder="カテゴリを選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {BookCategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category === 'おすすめ' ? '⭐ おすすめ' : category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -221,6 +238,21 @@ export function BooksPage() {
             <div className="text-center">
               <div className="text-lg mb-2">読み込み中...</div>
               <div className="text-sm text-gray-500">本を取得しています</div>
+            </div>
+          </div>
+        ) : quotaError ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="text-center max-w-md">
+              <p className="text-5xl mb-4">📚</p>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                本のデータを取得できませんでした
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Google Books APIの1日あたりのリクエスト上限に達しました。<br />
+                明日になると自動的にリセットされます。<br />
+                キャッシュが貯まると次回からは制限を気にせず使えます。
+              </p>
+              <Button variant="outline" onClick={loadBooks}>再試行</Button>
             </div>
           </div>
         ) : books.length === 0 ? (

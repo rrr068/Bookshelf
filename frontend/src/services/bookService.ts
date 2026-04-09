@@ -1,10 +1,11 @@
-import axios from 'axios';
 import { GoogleBooksResponse, GoogleBookItem, Book } from '@/types/book';
+import { apiClient } from './api';
 
-const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
+// バックエンドのプロキシエンドポイントを使用（Redisキャッシュ付き）
+const GOOGLE_BOOKS_PROXY_URL = '/google-books/search';
 
 /**
- * Google Books APIから本を検索
+ * Google Books APIから本を検索（バックエンド経由・Redisキャッシュ付き）
  */
 export async function searchBooks(
   query: string,
@@ -12,14 +13,12 @@ export async function searchBooks(
   startIndex: number = 0
 ): Promise<Book[]> {
   try {
-    const response = await axios.get<GoogleBooksResponse>(GOOGLE_BOOKS_API_URL, {
+    // バックエンドのプロキシエンドポイントを使用
+    const response = await apiClient.get<GoogleBooksResponse>(GOOGLE_BOOKS_PROXY_URL, {
       params: {
         q: query,
         maxResults,
         startIndex,
-        langRestrict: 'ja', // 日本語の本のみ
-        orderBy: 'relevance',
-        country: 'JP', // 日本で利用可能な本
       },
     });
 
@@ -33,8 +32,13 @@ export async function searchBooks(
       .filter((book) => book.language === 'ja');
 
     return books;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to search books:', error);
+
+    if (error.response?.status === 429 || error.response?.data?.error === 'QUOTA_EXCEEDED') {
+      throw new Error('QUOTA_EXCEEDED');
+    }
+
     throw new Error('本の検索に失敗しました');
   }
 }
