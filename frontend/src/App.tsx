@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { BooksPage } from './pages/BooksPage';
 import { BookDetailPage } from './pages/BookDetailPage';
 import { UserProfilePage } from './pages/UserProfilePage';
+import { TimelinePage } from './pages/TimelinePage';
 
 function App() {
   return (
@@ -49,6 +50,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <UserProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/timeline"
+            element={
+              <ProtectedRoute>
+                <TimelinePage />
               </ProtectedRoute>
             }
           />

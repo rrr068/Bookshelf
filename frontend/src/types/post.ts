@@ -15,6 +15,12 @@ export interface Post {
     id: string;
     username: string;
   };
+  book?: {
+    googleBooksId: string;
+    title: string;
+    authors: string[];
+    thumbnailUrl: string | null;
+  };
   likesCount: number;
   isLikedByCurrentUser?: boolean;
 }

@@ -23,6 +23,14 @@ export class PostRepository implements IPostRepository {
     return posts.map((p) => this.mapToEntity(p));
   }
 
+  async findAll(limit: number = 50): Promise<Post[]> {
+    const posts = await this.prisma.post.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return posts.map((p) => this.mapToEntity(p));
+  }
+
   async findByUserId(userId: string): Promise<Post[]> {
     const posts = await this.prisma.post.findMany({
       where: { userId },

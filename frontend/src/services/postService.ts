@@ -10,6 +10,14 @@ export async function createPost(data: CreatePostRequest): Promise<Post> {
 }
 
 /**
+ * タイムライン（全投稿）を取得
+ */
+export async function getTimeline(limit: number = 50): Promise<Post[]> {
+  const response = await apiClient.get<Post[]>(`/posts?limit=${limit}`);
+  return response.data;
+}
+
+/**
  * 本の投稿一覧を取得
  */
 export async function getBookPosts(googleBooksId: string): Promise<Post[]> {

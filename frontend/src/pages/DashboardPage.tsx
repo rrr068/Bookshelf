@@ -344,6 +344,9 @@ export function DashboardPage() {
               <Button variant="outline" size="sm" onClick={openPostModal}>
                 投稿する
               </Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/timeline')}>
+                タイムライン
+              </Button>
               <Button variant="default" size="sm" onClick={() => navigate('/books')}>
                 本を探す
               </Button>
@@ -514,6 +517,10 @@ export function DashboardPage() {
                               title: book.title,
                               authors: book.authors,
                               thumbnailUrl: book.thumbnailUrl,
+                              description: book.description,
+                              publisher: book.publisher,
+                              publishedDate: book.publishedDate,
+                              pageCount: book.pageCount,
                             },
                           },
                         })

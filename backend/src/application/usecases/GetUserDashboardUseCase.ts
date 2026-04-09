@@ -21,6 +21,10 @@ export interface RecentBookDto {
   title: string;
   authors: string[];
   thumbnailUrl: string | null;
+  description: string | null;
+  publisher: string | null;
+  publishedDate: string | null;
+  pageCount: number | null;
   status: string;
   updatedAt: Date;
 }
@@ -93,6 +97,10 @@ export class GetUserDashboardUseCase {
             ? book.authors.split(', ').filter((a: string) => a.trim())
             : [],
           thumbnailUrl: book.thumbnailUrl || null,
+          description: book.description || null,
+          publisher: book.publisher || null,
+          publishedDate: book.publishedDate || null,
+          pageCount: book.pageCount || null,
           status: s.status,
           updatedAt: s.updatedAt,
         };

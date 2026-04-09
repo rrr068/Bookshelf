@@ -7,6 +7,7 @@ export const createPostRoutes = (controller: PostController, jwtService: IJwtSer
   const app = new Hono();
   const auth = createAuthMiddleware(jwtService);
 
+  app.get('/', auth, (c) => controller.getTimeline(c));
   app.post('/', auth, (c) => controller.create(c));
   app.get('/book/:googleBooksId', auth, (c) => controller.getBookPosts(c));
   app.put('/:postId', auth, (c) => controller.update(c));

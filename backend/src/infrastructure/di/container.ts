@@ -15,6 +15,7 @@ import { GetReadingStatusUseCase } from '../../application/usecases/GetReadingSt
 import { GetUserBooksByStatusUseCase } from '../../application/usecases/GetUserBooksByStatusUseCase';
 import { CreatePostUseCase } from '../../application/usecases/CreatePostUseCase';
 import { GetBookPostsUseCase } from '../../application/usecases/GetBookPostsUseCase';
+import { GetTimelineUseCase } from '../../application/usecases/GetTimelineUseCase';
 import { UpdatePostUseCase } from '../../application/usecases/UpdatePostUseCase';
 import { DeletePostUseCase } from '../../application/usecases/DeletePostUseCase';
 import { TogglePostLikeUseCase } from '../../application/usecases/TogglePostLikeUseCase';
@@ -60,6 +61,7 @@ export class Container {
   public readonly getUserBooksByStatusUseCase: GetUserBooksByStatusUseCase;
   public readonly createPostUseCase: CreatePostUseCase;
   public readonly getBookPostsUseCase: GetBookPostsUseCase;
+  public readonly getTimelineUseCase: GetTimelineUseCase;
   public readonly updatePostUseCase: UpdatePostUseCase;
   public readonly deletePostUseCase: DeletePostUseCase;
   public readonly togglePostLikeUseCase: TogglePostLikeUseCase;
@@ -139,6 +141,13 @@ export class Container {
       this.bookRepository
     );
 
+    this.getTimelineUseCase = new GetTimelineUseCase(
+      this.postRepository,
+      this.userRepository,
+      this.postLikeRepository,
+      this.bookRepository
+    );
+
     this.updatePostUseCase = new UpdatePostUseCase(
       this.postRepository
     );
@@ -191,6 +200,7 @@ export class Container {
     this.postController = new PostController(
       this.createPostUseCase,
       this.getBookPostsUseCase,
+      this.getTimelineUseCase,
       this.updatePostUseCase,
       this.deletePostUseCase
     );

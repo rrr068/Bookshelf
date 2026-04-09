@@ -1,6 +1,7 @@
 import { Context } from 'hono';
 import { CreatePostUseCase } from '../../application/usecases/CreatePostUseCase';
 import { GetBookPostsUseCase } from '../../application/usecases/GetBookPostsUseCase';
+import { GetTimelineUseCase } from '../../application/usecases/GetTimelineUseCase';
 import { UpdatePostUseCase } from '../../application/usecases/UpdatePostUseCase';
 import { DeletePostUseCase } from '../../application/usecases/DeletePostUseCase';
 import { createPostSchema, updatePostSchema } from '../validators/postValidator';
@@ -9,6 +10,7 @@ export class PostController {
   constructor(
     private readonly createPostUseCase: CreatePostUseCase,
     private readonly getBookPostsUseCase: GetBookPostsUseCase,
+    private readonly getTimelineUseCase: GetTimelineUseCase,
     private readonly updatePostUseCase: UpdatePostUseCase,
     private readonly deletePostUseCase: DeletePostUseCase
   ) {}
@@ -31,6 +33,17 @@ export class PostController {
     } catch (error: any) {
       if (error.name === 'ZodError') return c.json({ error: 'Validation error', details: error.errors }, 400);
       return c.json({ error: error.message || 'Failed to create post' }, 400);
+    }
+  }
+
+  async getTimeline(c: Context) {
+    try {
+      const userId = c.get('userId');
+      const limit = parseInt(c.req.query('limit') || '50', 10);
+      const posts = await this.getTimelineUseCase.execute(userId, limit);
+      return c.json(posts, 200);
+    } catch (error: any) {
+      return c.json({ error: error.message || 'Failed to get timeline' }, 400);
     }
   }
 
