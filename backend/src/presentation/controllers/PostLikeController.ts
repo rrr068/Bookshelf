@@ -1,8 +1,12 @@
 import { Context } from 'hono';
 import { TogglePostLikeUseCase } from '../../application/usecases/TogglePostLikeUseCase';
+import { GetUserLikedPostsUseCase } from '../../application/usecases/GetUserLikedPostsUseCase';
 
 export class PostLikeController {
-  constructor(private readonly togglePostLikeUseCase: TogglePostLikeUseCase) {}
+  constructor(
+    private readonly togglePostLikeUseCase: TogglePostLikeUseCase,
+    private readonly getUserLikedPostsUseCase: GetUserLikedPostsUseCase
+  ) {}
 
   async toggle(c: Context) {
     try {
@@ -14,6 +18,16 @@ export class PostLikeController {
       return c.json(result, 200);
     } catch (error: any) {
       return c.json({ error: error.message || 'Failed to toggle like' }, 400);
+    }
+  }
+
+  async getUserLikedPosts(c: Context) {
+    try {
+      const userId = c.get('userId');
+      const posts = await this.getUserLikedPostsUseCase.execute(userId);
+      return c.json(posts, 200);
+    } catch (error: any) {
+      return c.json({ error: error.message || 'Failed to get liked posts' }, 500);
     }
   }
 }

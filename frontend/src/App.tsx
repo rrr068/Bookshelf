@@ -7,7 +7,6 @@ import { SignupPage } from './pages/SignupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { BooksPage } from './pages/BooksPage';
 import { BookDetailPage } from './pages/BookDetailPage';
-import { UserProfilePage } from './pages/UserProfilePage';
 import { TimelinePage } from './pages/TimelinePage';
 
 function App() {
@@ -45,15 +44,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <UserProfilePage />
-              </ProtectedRoute>
-            }
-          />
-
           <Route
             path="/timeline"
             element={

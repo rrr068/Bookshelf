@@ -21,6 +21,7 @@ import { DeletePostUseCase } from '../../application/usecases/DeletePostUseCase'
 import { TogglePostLikeUseCase } from '../../application/usecases/TogglePostLikeUseCase';
 import { ToggleBookLikeUseCase } from '../../application/usecases/ToggleBookLikeUseCase';
 import { GetUserLikedBooksUseCase } from '../../application/usecases/GetUserLikedBooksUseCase';
+import { GetUserLikedPostsUseCase } from '../../application/usecases/GetUserLikedPostsUseCase';
 import { GetBooksMetadataUseCase } from '../../application/usecases/GetBooksMetadataUseCase';
 import { SearchGoogleBooksUseCase } from '../../application/usecases/SearchGoogleBooksUseCase';
 import { AuthController } from '../../presentation/controllers/AuthController';
@@ -67,6 +68,7 @@ export class Container {
   public readonly togglePostLikeUseCase: TogglePostLikeUseCase;
   public readonly toggleBookLikeUseCase: ToggleBookLikeUseCase;
   public readonly getUserLikedBooksUseCase: GetUserLikedBooksUseCase;
+  public readonly getUserLikedPostsUseCase: GetUserLikedPostsUseCase;
   public readonly getBooksMetadataUseCase: GetBooksMetadataUseCase;
   public readonly searchGoogleBooksUseCase: SearchGoogleBooksUseCase;
   public readonly getUserDashboardUseCase: GetUserDashboardUseCase;
@@ -172,6 +174,13 @@ export class Container {
       this.readingStatusRepository
     );
 
+    this.getUserLikedPostsUseCase = new GetUserLikedPostsUseCase(
+      this.postRepository,
+      this.userRepository,
+      this.postLikeRepository,
+      this.bookRepository
+    );
+
     this.getBooksMetadataUseCase = new GetBooksMetadataUseCase(
       this.bookRepository,
       this.bookLikeRepository
@@ -206,7 +215,8 @@ export class Container {
     );
 
     this.postLikeController = new PostLikeController(
-      this.togglePostLikeUseCase
+      this.togglePostLikeUseCase,
+      this.getUserLikedPostsUseCase
     );
 
     this.bookLikeController = new BookLikeController(

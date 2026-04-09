@@ -46,3 +46,11 @@ export async function togglePostLike(postId: string): Promise<{ liked: boolean; 
   const response = await apiClient.post('/post-likes/toggle', { postId });
   return response.data;
 }
+
+/**
+ * 自分がいいねした投稿一覧を取得
+ */
+export async function getUserLikedPosts(): Promise<Post[]> {
+  const response = await apiClient.get<Post[]>('/post-likes/liked-posts');
+  return response.data;
+}

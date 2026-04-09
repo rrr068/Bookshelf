@@ -7,6 +7,7 @@ export const createPostLikeRoutes = (controller: PostLikeController, jwtService:
   const app = new Hono();
   const auth = createAuthMiddleware(jwtService);
 
+  app.get('/liked-posts', auth, (c) => controller.getUserLikedPosts(c));
   app.post('/toggle', auth, (c) => controller.toggle(c));
 
   return app;
