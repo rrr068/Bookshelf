@@ -82,7 +82,7 @@ export function UserProfilePage() {
             <Button variant="ghost" onClick={() => navigate('/')}>
               ← ホームに戻る
             </Button>
-            <h1 className="text-2xl font-bold">📚 マイページ</h1>
+            <h1 className="text-2xl font-bold">📚マイページ</h1>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               ログアウト
             </Button>

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SignupPage } from './pages/SignupPage';
+import { DashboardPage } from './pages/DashboardPage';
 import { BooksPage } from './pages/BooksPage';
 import { BookDetailPage } from './pages/BookDetailPage';
 import { UserProfilePage } from './pages/UserProfilePage';
@@ -17,6 +18,14 @@ function App() {
           {/* 保護されたルート */}
           <Route
             path="/"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/books"
             element={
               <ProtectedRoute>
                 <BooksPage />
