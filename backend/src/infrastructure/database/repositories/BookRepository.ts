@@ -119,6 +119,32 @@ export class BookRepository implements IBookRepository {
   }
 
   /**
+   * 複数の書籍の平均評価を一括取得
+   */
+  async getAverageRatings(bookIds: string[]): Promise<Record<string, number | null>> {
+    const results = await this.prisma.review.groupBy({
+      by: ['bookId'],
+      where: { bookId: { in: bookIds }, rating: { not: null } },
+      _avg: { rating: true },
+    });
+    const ratingMap: Record<string, number | null> = {};
+    for (const r of results) {
+      ratingMap[r.bookId] = r._avg.rating;
+    }
+    return ratingMap;
+  }
+
+  /**
+   * 複数のGoogle Books IDで書籍を一括取得
+   */
+  async findManyByGoogleBooksIds(googleBooksIds: string[]): Promise<Book[]> {
+    const books = await this.prisma.book.findMany({
+      where: { googleBooksId: { in: googleBooksIds } },
+    });
+    return books.map((b) => this.mapToEntity(b));
+  }
+
+  /**
    * PrismaのBookモデルをドメインエンティティにマッピング
    */
   private mapToEntity(prismaBook: any): Book {

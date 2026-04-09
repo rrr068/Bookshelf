@@ -20,6 +20,16 @@ export interface ILikeRepository {
   countByReviewId(reviewId: string): Promise<number>;
 
   /**
+   * 複数のレビューIDのいいね数を一括取得
+   */
+  countManyByReviewIds(reviewIds: string[]): Promise<Record<string, number>>;
+
+  /**
+   * ユーザーが複数のレビューにいいねしているかを一括取得
+   */
+  findManyByUserAndReviewIds(userId: string, reviewIds: string[]): Promise<Record<string, Like>>;
+
+  /**
    * いいねを保存
    */
   save(like: Like): Promise<Like>;

@@ -23,4 +23,9 @@ export interface IReadingStatusRepository {
    * 読書ステータスを削除
    */
   delete(id: string): Promise<void>;
+
+  /**
+   * ユーザーの複数の本の読書ステータスを一括取得
+   */
+  findManyByUserAndBookIds(userId: string, bookIds: string[]): Promise<Record<string, ReadingStatus>>;
 }

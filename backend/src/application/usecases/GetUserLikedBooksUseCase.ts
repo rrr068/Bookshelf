@@ -30,44 +30,36 @@ export class GetUserLikedBooksUseCase {
   ) {}
 
   async execute(userId: string): Promise<BookWithStatusDto[]> {
-    // ユーザーのいいねを取得
     const bookLikes = await this.bookLikeRepository.findByUserId(userId);
 
-    // 各本の詳細情報を取得
-    const books = await Promise.all(
-      bookLikes.map(async (like) => {
-        const book = await this.bookRepository.findById(like.bookId);
-        if (!book) return null;
+    if (bookLikes.length === 0) {
+      return [];
+    }
 
-        // いいね数を取得
-        const likesCount = await this.bookLikeRepository.countByBookId(book.id);
+    const bookIds = bookLikes.map((like) => like.bookId);
 
-        // 平均評価を取得
-        const averageRating = await this.bookRepository.getAverageRating(book.id);
+    const [books, likesCounts, averageRatings, readingStatuses] = await Promise.all([
+      this.bookRepository.findMany(bookIds),
+      this.bookLikeRepository.countManyByBookIds(bookIds),
+      this.bookRepository.getAverageRatings(bookIds),
+      this.readingStatusRepository.findManyByUserAndBookIds(userId, bookIds),
+    ]);
 
-        // 読書ステータスを取得
-        const readingStatus = await this.readingStatusRepository.findByUserAndBook(userId, book.id);
-
-        return {
-          googleBooksId: book.googleBooksId,
-          title: book.title,
-          authors: book.authors.split(', ').filter(a => a.trim()),
-          publisher: book.publisher,
-          publishedDate: book.publishedDate,
-          description: book.description,
-          isbn10: book.isbn10,
-          isbn13: book.isbn13,
-          pageCount: book.pageCount,
-          thumbnailUrl: book.thumbnailUrl,
-          language: book.language,
-          likesCount,
-          averageRating: averageRating || undefined,
-          readingStatus: readingStatus?.status || null,
-        };
-      })
-    );
-
-    // nullを除外
-    return books.filter(book => book !== null) as BookWithStatusDto[];
+    return books.map((book) => ({
+      googleBooksId: book.googleBooksId,
+      title: book.title,
+      authors: book.authors.split(', ').filter((a) => a.trim()),
+      publisher: book.publisher,
+      publishedDate: book.publishedDate,
+      description: book.description,
+      isbn10: book.isbn10,
+      isbn13: book.isbn13,
+      pageCount: book.pageCount,
+      thumbnailUrl: book.thumbnailUrl,
+      language: book.language,
+      likesCount: likesCounts[book.id] ?? 0,
+      averageRating: averageRatings[book.id] || undefined,
+      readingStatus: readingStatuses[book.id]?.status || null,
+    }));
   }
 }

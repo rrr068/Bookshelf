@@ -24,6 +24,16 @@ export class ReviewRepository implements IReviewRepository {
   }
 
   /**
+   * 複数のIDでレビューを一括取得
+   */
+  async findManyByIds(ids: string[]): Promise<Review[]> {
+    const reviews = await this.prisma.review.findMany({
+      where: { id: { in: ids } },
+    });
+    return reviews.map((r) => this.mapToEntity(r));
+  }
+
+  /**
    * ユーザーと書籍の組み合わせでレビューを検索
    */
   async findByUserAndBook(userId: string, bookId: string): Promise<Review | null> {

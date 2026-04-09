@@ -10,6 +10,11 @@ export interface IReviewRepository {
   findById(id: string): Promise<Review | null>;
 
   /**
+   * 複数のIDでレビューを一括取得
+   */
+  findManyByIds(ids: string[]): Promise<Review[]>;
+
+  /**
    * ユーザーと書籍の組み合わせでレビューを検索
    */
   findByUserAndBook(userId: string, bookId: string): Promise<Review | null>;

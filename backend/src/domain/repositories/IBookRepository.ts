@@ -28,4 +28,14 @@ export interface IBookRepository {
    * 書籍の平均評価を取得
    */
   getAverageRating(bookId: string): Promise<number | null>;
+
+  /**
+   * 複数の書籍の平均評価を一括取得
+   */
+  getAverageRatings(bookIds: string[]): Promise<Record<string, number | null>>;
+
+  /**
+   * 複数のGoogle Books IDで書籍を一括取得
+   */
+  findManyByGoogleBooksIds(googleBooksIds: string[]): Promise<Book[]>;
 }

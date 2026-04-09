@@ -18,32 +18,34 @@ export class GetBooksMetadataUseCase {
   ) {}
 
   async execute(userId: string, googleBooksIds: string[]): Promise<BookMetadataDto[]> {
-    const metadata = await Promise.all(
-      googleBooksIds.map(async (googleBooksId) => {
-        const book = await this.bookRepository.findByGoogleBooksId(googleBooksId);
+    const books = await this.bookRepository.findManyByGoogleBooksIds(googleBooksIds);
+    const booksMap = new Map(books.map((b) => [b.googleBooksId, b]));
 
-        if (!book) {
-          return {
-            googleBooksId,
-            averageRating: null,
-            likesCount: 0,
-            isLikedByCurrentUser: false,
-          };
-        }
+    const existingBookIds = books.map((b) => b.id);
 
-        const averageRating = await this.bookRepository.getAverageRating(book.id);
-        const likesCount = await this.bookLikeRepository.countByBookId(book.id);
-        const userLike = await this.bookLikeRepository.findByUserAndBook(userId, book.id);
+    const [likesCounts, averageRatings, userLikes] = await Promise.all([
+      existingBookIds.length > 0
+        ? this.bookLikeRepository.countManyByBookIds(existingBookIds)
+        : Promise.resolve({} as Record<string, number>),
+      existingBookIds.length > 0
+        ? this.bookRepository.getAverageRatings(existingBookIds)
+        : Promise.resolve({} as Record<string, number | null>),
+      existingBookIds.length > 0
+        ? this.bookLikeRepository.findManyByUserAndBookIds(userId, existingBookIds)
+        : Promise.resolve({} as Record<string, any>),
+    ]);
 
-        return {
-          googleBooksId,
-          averageRating,
-          likesCount,
-          isLikedByCurrentUser: !!userLike,
-        };
-      })
-    );
-
-    return metadata;
+    return googleBooksIds.map((googleBooksId) => {
+      const book = booksMap.get(googleBooksId);
+      if (!book) {
+        return { googleBooksId, averageRating: null, likesCount: 0, isLikedByCurrentUser: false };
+      }
+      return {
+        googleBooksId,
+        averageRating: averageRatings[book.id] ?? null,
+        likesCount: likesCounts[book.id] ?? 0,
+        isLikedByCurrentUser: !!userLikes[book.id],
+      };
+    });
   }
 }

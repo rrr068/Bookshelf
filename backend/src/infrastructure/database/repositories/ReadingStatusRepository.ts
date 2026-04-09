@@ -87,6 +87,20 @@ export class ReadingStatusRepository implements IReadingStatusRepository {
   }
 
   /**
+   * ユーザーの複数の本の読書ステータスを一括取得
+   */
+  async findManyByUserAndBookIds(userId: string, bookIds: string[]): Promise<Record<string, ReadingStatus>> {
+    const statuses = await this.prisma.readingStatus.findMany({
+      where: { userId, bookId: { in: bookIds } },
+    });
+    const result: Record<string, ReadingStatus> = {};
+    for (const s of statuses) {
+      result[s.bookId] = this.mapToEntity(s);
+    }
+    return result;
+  }
+
+  /**
    * PrismaのReadingStatusモデルをドメインエンティティにマッピング
    */
   private mapToEntity(prismaStatus: any): ReadingStatus {

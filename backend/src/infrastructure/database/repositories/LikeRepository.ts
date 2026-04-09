@@ -50,6 +50,36 @@ export class LikeRepository implements ILikeRepository {
   }
 
   /**
+   * 複数のレビューIDのいいね数を一括取得
+   */
+  async countManyByReviewIds(reviewIds: string[]): Promise<Record<string, number>> {
+    const counts = await this.prisma.like.groupBy({
+      by: ['reviewId'],
+      where: { reviewId: { in: reviewIds } },
+      _count: { reviewId: true },
+    });
+    const result: Record<string, number> = {};
+    for (const c of counts) {
+      result[c.reviewId] = c._count.reviewId;
+    }
+    return result;
+  }
+
+  /**
+   * ユーザーが複数のレビューにいいねしているかを一括取得
+   */
+  async findManyByUserAndReviewIds(userId: string, reviewIds: string[]): Promise<Record<string, Like>> {
+    const likes = await this.prisma.like.findMany({
+      where: { userId, reviewId: { in: reviewIds } },
+    });
+    const result: Record<string, Like> = {};
+    for (const like of likes) {
+      result[like.reviewId] = this.mapToEntity(like);
+    }
+    return result;
+  }
+
+  /**
    * いいねを保存
    */
   async save(like: Like): Promise<Like> {

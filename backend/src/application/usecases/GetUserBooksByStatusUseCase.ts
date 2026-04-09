@@ -30,30 +30,34 @@ export class GetUserBooksByStatusUseCase {
   ) {}
 
   async execute(userId: string, status?: string): Promise<BooksByStatusDto[]> {
-    // ユーザーの読書ステータスを取得
     const readingStatuses = await this.readingStatusRepository.findByUserId(userId);
 
-    // statusが指定されている場合はフィルタリング
     const filteredStatuses = status
       ? readingStatuses.filter((rs) => rs.status === status)
       : readingStatuses;
 
-    // 各本の詳細情報を取得
-    const books = await Promise.all(
-      filteredStatuses.map(async (rs) => {
-        const book = await this.bookRepository.findById(rs.bookId);
-        if (!book) return null;
+    if (filteredStatuses.length === 0) {
+      return [];
+    }
 
-        // いいね数を取得
-        const likesCount = await this.bookLikeRepository.countByBookId(book.id);
+    const bookIds = filteredStatuses.map((rs) => rs.bookId);
 
-        // 平均評価を取得
-        const averageRating = await this.bookRepository.getAverageRating(book.id);
+    const [books, likesCounts, averageRatings] = await Promise.all([
+      this.bookRepository.findMany(bookIds),
+      this.bookLikeRepository.countManyByBookIds(bookIds),
+      this.bookRepository.getAverageRatings(bookIds),
+    ]);
 
+    const statusMap = new Map(filteredStatuses.map((rs) => [rs.bookId, rs]));
+
+    return books
+      .filter((book) => statusMap.has(book.id))
+      .map((book) => {
+        const rs = statusMap.get(book.id)!;
         return {
           googleBooksId: book.googleBooksId,
           title: book.title,
-          authors: book.authors.split(', ').filter(a => a.trim()),
+          authors: book.authors.split(', ').filter((a) => a.trim()),
           publisher: book.publisher,
           publishedDate: book.publishedDate,
           description: book.description,
@@ -63,13 +67,9 @@ export class GetUserBooksByStatusUseCase {
           thumbnailUrl: book.thumbnailUrl,
           language: book.language,
           status: rs.status,
-          likesCount,
-          averageRating: averageRating || undefined,
+          likesCount: likesCounts[book.id] ?? 0,
+          averageRating: averageRatings[book.id] || undefined,
         };
-      })
-    );
-
-    // nullを除外
-    return books.filter(book => book !== null) as BooksByStatusDto[];
+      });
   }
 }

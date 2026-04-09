@@ -14,35 +14,35 @@ export class GetUserLikedReviewsUseCase {
   ) {}
 
   async execute(userId: string, currentUserId?: string): Promise<ReviewResponseDto[]> {
-    // ユーザーがいいねしたレビューIDを取得
     const reviewIds = await this.likeRepository.findReviewIdsByUserId(userId);
 
     if (reviewIds.length === 0) {
       return [];
     }
 
-    // レビューの詳細を取得
-    const reviews: ReviewResponseDto[] = [];
+    const reviews = await this.reviewRepository.findManyByIds(reviewIds);
+    const validReviews = reviews.filter((r) => r);
 
-    for (const reviewId of reviewIds) {
-      const review = await this.reviewRepository.findById(reviewId);
-      if (!review) continue;
+    if (validReviews.length === 0) {
+      return [];
+    }
 
-      const user = await this.userRepository.findById(review.userId);
-      if (!user) continue;
+    const userIds = [...new Set(validReviews.map((r) => r.userId))];
+    const validReviewIds = validReviews.map((r) => r.id);
 
-      const likesCount = await this.likeRepository.countByReviewId(review.id);
+    const [users, likesCounts, userLikes] = await Promise.all([
+      this.userRepository.findManyByIds(userIds),
+      this.likeRepository.countManyByReviewIds(validReviewIds),
+      currentUserId
+        ? this.likeRepository.findManyByUserAndReviewIds(currentUserId, validReviewIds)
+        : Promise.resolve({} as Record<string, any>),
+    ]);
 
-      let isLikedByCurrentUser = false;
-      if (currentUserId) {
-        const like = await this.likeRepository.findByUserAndReview(
-          currentUserId,
-          review.id
-        );
-        isLikedByCurrentUser = !!like;
-      }
+    const usersMap = new Map(users.map((u) => [u.id, u]));
 
-      reviews.push({
+    return validReviews
+      .filter((review) => usersMap.has(review.userId))
+      .map((review) => ({
         id: review.id,
         userId: review.userId,
         bookId: review.bookId,
@@ -51,14 +51,11 @@ export class GetUserLikedReviewsUseCase {
         createdAt: review.createdAt.toISOString(),
         updatedAt: review.updatedAt.toISOString(),
         user: {
-          id: user.id,
-          username: user.username,
+          id: usersMap.get(review.userId)!.id,
+          username: usersMap.get(review.userId)!.username,
         },
-        likesCount,
-        isLikedByCurrentUser,
-      });
-    }
-
-    return reviews;
+        likesCount: likesCounts[review.id] ?? 0,
+        isLikedByCurrentUser: !!userLikes[review.id],
+      }));
   }
 }

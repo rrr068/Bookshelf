@@ -21,6 +21,11 @@ export interface IUserRepository {
   existsByEmail(email: string): Promise<boolean>;
 
   /**
+   * 複数のIDでユーザーを一括取得
+   */
+  findManyByIds(ids: string[]): Promise<User[]>;
+
+  /**
    * ユーザーを保存
    */
   save(user: User): Promise<User>;

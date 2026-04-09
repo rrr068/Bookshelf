@@ -28,4 +28,14 @@ export interface IBookLikeRepository {
    * 本のいいね数を取得
    */
   countByBookId(bookId: string): Promise<number>;
+
+  /**
+   * 複数の本のいいね数を一括取得
+   */
+  countManyByBookIds(bookIds: string[]): Promise<Record<string, number>>;
+
+  /**
+   * ユーザーが複数の本にいいねしているかを一括取得
+   */
+  findManyByUserAndBookIds(userId: string, bookIds: string[]): Promise<Record<string, BookLike>>;
 }

@@ -40,6 +40,16 @@ export class UserRepository implements IUserRepository {
   }
 
   /**
+   * 複数のIDでユーザーを一括取得
+   */
+  async findManyByIds(ids: string[]): Promise<User[]> {
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: ids } },
+    });
+    return users.map((u) => this.mapToEntity(u));
+  }
+
+  /**
    * メールアドレスが既に登録されているかチェック
    */
   async existsByEmail(email: string): Promise<boolean> {
