@@ -28,6 +28,15 @@ export interface AuthResponseDto {
 }
 
 /**
+ * お気に入り本の情報
+ */
+export interface FavoriteBookDto {
+  googleBooksId: string;
+  title: string;
+  thumbnailUrl: string | null;
+}
+
+/**
  * ユーザー情報レスポンスDTO
  */
 export interface UserResponseDto {
@@ -35,4 +44,6 @@ export interface UserResponseDto {
   email: string;
   username: string;
   createdAt: string;
+  goal: string | null;
+  favoriteBooks: FavoriteBookDto[];
 }

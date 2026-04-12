@@ -16,12 +16,23 @@ export interface LoginRequest {
 }
 
 /**
+ * お気に入り本
+ */
+export interface FavoriteBook {
+  googleBooksId: string;
+  title: string;
+  thumbnailUrl: string | null;
+}
+
+/**
  * ユーザー情報
  */
 export interface User {
   id: string;
   email: string;
   username: string;
+  goal?: string | null;
+  favoriteBooks?: FavoriteBook[];
 }
 
 /**

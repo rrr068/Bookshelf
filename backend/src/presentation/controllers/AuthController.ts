@@ -95,11 +95,13 @@ export class AuthController {
     try {
       const userId = c.get('userId');
       const body = await c.req.json();
-      const result = await this.updateUserUseCase.execute(userId, {
+      await this.updateUserUseCase.execute(userId, {
         username: body.username,
-        currentPassword: body.currentPassword,
-        newPassword: body.newPassword,
+        goal: body.goal !== undefined ? body.goal : undefined,
+        favoriteBookIds: body.favoriteBookIds,
       });
+      // 更新後の完全なユーザー情報（favoriteBooks詳細含む）を返す
+      const result = await this.getCurrentUserUseCase.execute(userId);
       return c.json(result, 200);
     } catch (error: any) {
       return c.json({ error: error.message || 'Failed to update profile' }, 400);
