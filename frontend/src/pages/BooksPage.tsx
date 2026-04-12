@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { UserMenu } from '@/components/UserMenu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BookCard } from '@/components/BookCard';
 import { Book, BookCategories, BookCategory } from '@/types/book';
 import { searchBooks, searchBooksByCategory, getFeaturedBooks } from '@/services/bookService';
-import { toggleBookLike } from '@/services/bookLikeService';
 import { getBooksMetadata } from '@/services/bookMetadataService';
 import {
   Select,
@@ -20,7 +19,6 @@ import {
  * 本の一覧ページ（Filmarksライクなデザイン）
  */
 export function BooksPage() {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,16 +34,6 @@ export function BooksPage() {
   }, [selectedCategory]);
 
   /**
-   * 人気度スコアを計算
-   */
-  const calculatePopularityScore = (book: Book): number => {
-    const rating = book.averageRating || 0;
-    const likes = book.likesCount || 0;
-    // 評価を重視（5点満点を10倍）+ いいね数
-    return (rating * 10) + likes;
-  };
-
-  /**
    * 本を読み込む
    */
   const loadBooks = async () => {
@@ -56,7 +44,7 @@ export function BooksPage() {
         ? await getFeaturedBooks(40)
         : await searchBooksByCategory(selectedCategory, 40);
 
-      // 本のメタデータ（平均評価、いいね数）を取得
+      // 本のメタデータ（平均評価）を取得
       const googleBooksIds = result.map(book => book.googleBooksId);
       const metadata = await getBooksMetadata(googleBooksIds);
 
@@ -66,14 +54,12 @@ export function BooksPage() {
         return {
           ...book,
           averageRating: meta?.averageRating || undefined,
-          likesCount: meta?.likesCount || 0,
-          isLikedByCurrentUser: meta?.isLikedByCurrentUser || false,
         };
       });
 
-      // 人気順にソート
+      // 評価順にソート
       const sortedBooks = booksWithMetadata.sort((a, b) => {
-        return calculatePopularityScore(b) - calculatePopularityScore(a);
+        return (b.averageRating || 0) - (a.averageRating || 0);
       });
 
       setBooks(sortedBooks);
@@ -99,7 +85,7 @@ export function BooksPage() {
     try {
       const result = await searchBooks(searchQuery, 40);
 
-      // 本のメタデータ（平均評価、いいね数）を取得
+      // 本のメタデータ（平均評価）を取得
       const googleBooksIds = result.map(book => book.googleBooksId);
       const metadata = await getBooksMetadata(googleBooksIds);
 
@@ -109,14 +95,12 @@ export function BooksPage() {
         return {
           ...book,
           averageRating: meta?.averageRating || undefined,
-          likesCount: meta?.likesCount || 0,
-          isLikedByCurrentUser: meta?.isLikedByCurrentUser || false,
         };
       });
 
-      // 人気順にソート
+      // 評価順にソート
       const sortedBooks = booksWithMetadata.sort((a, b) => {
-        return calculatePopularityScore(b) - calculatePopularityScore(a);
+        return (b.averageRating || 0) - (a.averageRating || 0);
       });
 
       setBooks(sortedBooks);
@@ -140,36 +124,10 @@ export function BooksPage() {
   };
 
   /**
-   * ログアウト
-   */
-  const handleLogout = () => {
-    logout();
-  };
-
-  /**
    * 本をクリック - 詳細ページに遷移
    */
   const handleBookClick = (book: Book) => {
     navigate(`/book/${book.id}`, { state: { book } });
-  };
-
-  /**
-   * いいねボタンクリック
-   */
-  const handleLike = async (e: React.MouseEvent, book: Book) => {
-    e.stopPropagation();
-    try {
-      const result = await toggleBookLike(book.googleBooksId);
-
-      // 本の一覧を更新
-      setBooks(books.map(b =>
-        b.googleBooksId === book.googleBooksId
-          ? { ...b, isLikedByCurrentUser: result.liked, likesCount: result.likesCount }
-          : b
-      ));
-    } catch (error: any) {
-      alert(error.message || 'いいねに失敗しました');
-    }
   };
 
   return (
@@ -185,16 +143,7 @@ export function BooksPage() {
               BookMark
             </h1>
             <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/dashboard')}
-              >
-                {user?.username} さん
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                ログアウト
-              </Button>
+              <UserMenu />
             </div>
           </div>
 
@@ -270,7 +219,7 @@ export function BooksPage() {
                 {books.length} 件の本が見つかりました
               </div>
               <div className="text-xs text-gray-500">
-                人気順（評価 × いいね数）
+                評価順
               </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -279,7 +228,6 @@ export function BooksPage() {
                   key={book.id}
                   book={book}
                   onClick={() => handleBookClick(book)}
-                  onLike={(e) => handleLike(e, book)}
                 />
               ))}
             </div>

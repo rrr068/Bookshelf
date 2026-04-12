@@ -1,24 +1,22 @@
 import { IUserRepository } from '../../domain/repositories/IUserRepository';
-import { IPasswordHasher } from '../interfaces/IPasswordHasher';
 import { User } from '../../domain/entities/User';
 
 export interface UpdateUserRequestDto {
   username?: string;
-  currentPassword?: string;
-  newPassword?: string;
+  goal?: string | null;
+  favoriteBookIds?: string[];
 }
 
 export interface UpdateUserResponseDto {
   id: string;
   email: string;
   username: string;
+  goal: string | null;
+  favoriteBookIds: string[];
 }
 
 export class UpdateUserUseCase {
-  constructor(
-    private readonly userRepository: IUserRepository,
-    private readonly passwordHasher: IPasswordHasher
-  ) {}
+  constructor(private readonly userRepository: IUserRepository) {}
 
   async execute(userId: string, request: UpdateUserRequestDto): Promise<UpdateUserResponseDto> {
     const user = await this.userRepository.findById(userId);
@@ -30,28 +28,15 @@ export class UpdateUserUseCase {
       throw new Error('Username must be between 1 and 50 characters');
     }
 
-    let newPasswordHash = user.passwordHash;
-    if (request.newPassword) {
-      if (!request.currentPassword) {
-        throw new Error('Current password is required to change password');
-      }
-      const isValid = await this.passwordHasher.compare(request.currentPassword, user.passwordHash);
-      if (!isValid) {
-        throw new Error('Current password is incorrect');
-      }
-      if (!User.isValidPasswordLength(request.newPassword)) {
-        throw new Error('New password must be at least 8 characters');
-      }
-      newPasswordHash = await this.passwordHasher.hash(request.newPassword);
-    }
-
     const updatedUser = new User(
       user.id,
       user.email,
-      newPasswordHash,
+      user.passwordHash,
       request.username ?? user.username,
       user.createdAt,
-      new Date()
+      new Date(),
+      request.goal !== undefined ? request.goal : user.goal,
+      request.favoriteBookIds !== undefined ? request.favoriteBookIds : user.favoriteBookIds
     );
 
     const saved = await this.userRepository.save(updatedUser);
@@ -59,6 +44,8 @@ export class UpdateUserUseCase {
       id: saved.id,
       email: saved.email,
       username: saved.username,
+      goal: saved.goal,
+      favoriteBookIds: saved.favoriteBookIds,
     };
   }
 }

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { updateReadingStatus, getReadingStatus } from '@/services/readingStatusService';
+import { getBooksMetadata } from '@/services/bookMetadataService';
 import { ReadingStatus, ReadingStatusLabel } from '@/types/readingStatus';
 
 export function BookDetailPage() {
@@ -15,9 +16,13 @@ export function BookDetailPage() {
 
   const [selectedStatus, setSelectedStatus] = useState<ReadingStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
+  const [averageRating, setAverageRating] = useState<number | null>(null);
 
   useEffect(() => {
-    if (book) loadReadingStatus();
+    if (book) {
+      loadReadingStatus();
+      loadRating();
+    }
   }, [book]);
 
   const loadReadingStatus = async () => {
@@ -30,6 +35,16 @@ export function BookDetailPage() {
       console.error('Failed to load reading status:', error);
     } finally {
       setStatusLoading(false);
+    }
+  };
+
+  const loadRating = async () => {
+    if (!book) return;
+    try {
+      const metadata = await getBooksMetadata([book.googleBooksId]);
+      if (metadata[0]) setAverageRating(metadata[0].averageRating);
+    } catch {
+      // 評価取得失敗は無視
     }
   };
 
@@ -64,6 +79,8 @@ export function BookDetailPage() {
     );
   }
 
+  const displayRating = averageRating ?? book.averageRating ?? null;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
@@ -92,8 +109,31 @@ export function BookDetailPage() {
                 )}
               </div>
               <div className="md:col-span-2">
-                <h1 className="text-3xl font-bold mb-3">{book.title}</h1>
-                <p className="text-lg text-gray-600 mb-4">{book.authors.join(', ')}</p>
+                <h1 className="text-3xl font-bold mb-2">{book.title}</h1>
+                <p className="text-lg text-gray-600 mb-3">{book.authors.join(', ')}</p>
+
+                {/* 評価 */}
+                {displayRating !== null ? (
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <span
+                          key={i}
+                          className={`text-xl ${i < Math.round(displayRating) ? 'text-yellow-500' : 'text-gray-200'}`}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-base font-semibold text-gray-700">
+                      {displayRating.toFixed(1)}
+                    </span>
+                    <span className="text-sm text-gray-400">/ 5.0</span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 mb-4">まだ評価がありません</p>
+                )}
+
                 <div className="text-sm text-gray-600 mb-6 space-y-1">
                   {book.publisher && <p>出版社: {book.publisher}</p>}
                   {book.publishedDate && <p>出版日: {book.publishedDate}</p>}

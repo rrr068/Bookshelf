@@ -49,7 +49,6 @@ export interface BooksByStatus {
   thumbnailUrl: string | null;
   language: string;
   status: ReadingStatus;
-  likesCount: number;
   averageRating?: number;
 }
 

@@ -7,7 +7,6 @@ import { createAuthRoutes } from './presentation/routes/authRoutes.js';
 import { createReadingStatusRoutes } from './presentation/routes/readingStatusRoutes.js';
 import { createPostRoutes } from './presentation/routes/postRoutes.js';
 import { createPostLikeRoutes } from './presentation/routes/postLikeRoutes.js';
-import { createBookLikeRoutes } from './presentation/routes/bookLikeRoutes.js';
 import { createBookRoutes } from './presentation/routes/bookRoutes.js';
 import { createGoogleBooksRoutes } from './presentation/routes/googleBooksRoutes.js';
 import { createDashboardRoutes } from './presentation/routes/dashboardRoutes.js';
@@ -53,12 +52,6 @@ const postLikeRoutes = createPostLikeRoutes(
   container.jwtService
 );
 app.route('/api/post-likes', postLikeRoutes);
-
-const bookLikeRoutes = createBookLikeRoutes(
-  container.bookLikeController,
-  container.jwtService
-);
-app.route('/api/book-likes', bookLikeRoutes);
 
 const bookRoutes = createBookRoutes(
   container.bookController,

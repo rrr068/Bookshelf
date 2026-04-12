@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserMenu } from '@/components/UserMenu';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,7 +40,7 @@ const DONUT_COLORS = {
 };
 
 export function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   // メインタブ
@@ -185,7 +186,6 @@ export function DashboardPage() {
       thumbnailUrl: book.thumbnailUrl || undefined,
       language: book.language,
       averageRating: book.averageRating,
-      likesCount: book.likesCount,
     };
     navigate(`/book/${book.googleBooksId}`, { state: { book: bookData } });
   };
@@ -425,9 +425,7 @@ export function DashboardPage() {
               <Button variant="default" size="sm" onClick={() => navigate('/books')}>
                 本を探す
               </Button>
-              <Button variant="outline" size="sm" onClick={logout}>
-                ログアウト
-              </Button>
+              <UserMenu />
             </div>
           </div>
         </div>
@@ -437,13 +435,44 @@ export function DashboardPage() {
         {/* ユーザー情報 */}
         <Card className="mb-6">
           <CardContent className="pt-6 pb-5">
-            <div className="flex items-center gap-4">
+            <div className="flex items-start gap-4">
               <div className="w-14 h-14 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0">
                 {user?.username.charAt(0).toUpperCase()}
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <h2 className="text-xl font-bold">{user?.username}</h2>
                 <p className="text-sm text-gray-500">{user?.email}</p>
+                {user?.goal && (
+                  <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">
+                    <span className="font-medium text-gray-500 mr-1">目標:</span>
+                    {user.goal}
+                  </p>
+                )}
+                {user?.favoriteBooks && user.favoriteBooks.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-gray-500 mb-2">好きな本</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {user.favoriteBooks.map((book) => (
+                        <div
+                          key={book.googleBooksId}
+                          className="flex items-center gap-1.5 bg-gray-50 border rounded-md px-2 py-1"
+                          title={book.title}
+                        >
+                          {book.thumbnailUrl ? (
+                            <img
+                              src={book.thumbnailUrl}
+                              alt={book.title}
+                              className="w-5 h-7 object-cover rounded flex-shrink-0"
+                            />
+                          ) : (
+                            <span className="text-xs">📖</span>
+                          )}
+                          <span className="text-xs text-gray-700 max-w-[100px] truncate">{book.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -819,7 +848,6 @@ export function DashboardPage() {
                         thumbnailUrl: book.thumbnailUrl || undefined,
                         language: book.language,
                         averageRating: book.averageRating,
-                        likesCount: book.likesCount,
                       }}
                       onClick={() => handleBookClick(book)}
                     />

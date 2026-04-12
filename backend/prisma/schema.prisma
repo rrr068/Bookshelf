@@ -15,17 +15,17 @@ model User {
   id            String   @id @default(uuid())
   email         String   @unique
   passwordHash  String   @map("password_hash")
-  username      String
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  username        String
+  goal            String?
+  favoriteBookIds String?  @map("favorite_book_ids") // JSON array of googleBooksIds
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   // リレーション
   books          Book[]
   readingStatuses ReadingStatus[]
   posts          Post[]
   postLikes      PostLike[]
-  bookLikes      BookLike[]
-
   @@index([email])
   @@map("users")
 }
@@ -52,8 +52,6 @@ model Book {
   creator        User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   readingStatuses ReadingStatus[]
   posts          Post[]
-  bookLikes      BookLike[]
-
   @@index([googleBooksId])
   @@index([title])
   @@index([isbn13])
@@ -122,19 +120,3 @@ model PostLike {
   @@map("post_likes")
 }
 
-// 本へのいいねテーブル
-model BookLike {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  bookId    String   @map("book_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // リレーション
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, bookId])
-  @@index([bookId])
-  @@index([userId])
-  @@map("book_likes")
-}

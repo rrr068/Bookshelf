@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserMenu } from '@/components/UserMenu';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -115,9 +116,7 @@ export function TimelinePage() {
               <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
                 ダッシュボード
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
-                {user?.username} さん
-              </Button>
+              <UserMenu />
             </div>
           </div>
         </div>

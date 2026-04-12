@@ -11,7 +11,6 @@ export class BookController {
    */
   async getMetadata(c: Context) {
     try {
-      const userId = c.get('userId');
       const body = await c.req.json();
       const { googleBooksIds } = body;
 
@@ -19,7 +18,7 @@ export class BookController {
         return c.json({ error: 'googleBooksIds must be an array' }, 400);
       }
 
-      const metadata = await this.getBooksMetadataUseCase.execute(userId, googleBooksIds);
+      const metadata = await this.getBooksMetadataUseCase.execute(googleBooksIds);
       return c.json(metadata, 200);
     } catch (error: any) {
       return c.json({ error: error.message || 'Failed to get books metadata' }, 400);
