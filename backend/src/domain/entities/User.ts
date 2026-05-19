@@ -9,7 +9,9 @@ export class User {
     public readonly passwordHash: string,
     public readonly username: string,
     public readonly createdAt: Date,
-    public readonly updatedAt: Date
+    public readonly updatedAt: Date,
+    public readonly goal: string | null = null,
+    public readonly favoriteBookIds: string[] = []
   ) {}
 
   /**
@@ -57,7 +59,9 @@ export class User {
       passwordHash,
       username,
       new Date(),
-      new Date()
+      new Date(),
+      null,
+      []
     );
   }
 }

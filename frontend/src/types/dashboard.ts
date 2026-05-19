@@ -18,6 +18,10 @@ export interface RecentBook {
   title: string;
   authors: string[];
   thumbnailUrl: string | null;
+  description: string | null;
+  publisher: string | null;
+  publishedDate: string | null;
+  pageCount: number | null;
   status: string;
   updatedAt: string;
 }

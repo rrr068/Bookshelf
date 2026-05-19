@@ -70,6 +70,8 @@ export class UserRepository implements IUserRepository {
           email: user.email,
           passwordHash: user.passwordHash,
           username: user.username,
+          goal: user.goal,
+          favoriteBookIds: JSON.stringify(user.favoriteBookIds),
         },
       });
 
@@ -83,6 +85,8 @@ export class UserRepository implements IUserRepository {
         email: user.email,
         passwordHash: user.passwordHash,
         username: user.username,
+        goal: user.goal,
+        favoriteBookIds: JSON.stringify(user.favoriteBookIds),
       },
     });
 
@@ -93,13 +97,23 @@ export class UserRepository implements IUserRepository {
    * PrismaのUserモデルをドメインエンティティにマッピング
    */
   private mapToEntity(prismaUser: any): User {
+    let favoriteBookIds: string[] = [];
+    if (prismaUser.favoriteBookIds) {
+      try {
+        favoriteBookIds = JSON.parse(prismaUser.favoriteBookIds);
+      } catch {
+        favoriteBookIds = [];
+      }
+    }
     return new User(
       prismaUser.id,
       prismaUser.email,
       prismaUser.passwordHash,
       prismaUser.username,
       prismaUser.createdAt,
-      prismaUser.updatedAt
+      prismaUser.updatedAt,
+      prismaUser.goal ?? null,
+      favoriteBookIds
     );
   }
 }

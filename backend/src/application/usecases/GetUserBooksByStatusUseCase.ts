@@ -1,6 +1,5 @@
 import { IReadingStatusRepository } from '../../domain/repositories/IReadingStatusRepository';
 import { IBookRepository } from '../../domain/repositories/IBookRepository';
-import { IBookLikeRepository } from '../../domain/repositories/IBookLikeRepository';
 
 export interface BooksByStatusDto {
   googleBooksId: string;
@@ -15,7 +14,6 @@ export interface BooksByStatusDto {
   thumbnailUrl: string | null;
   language: string;
   status: string;
-  likesCount: number;
   averageRating?: number;
 }
 
@@ -25,8 +23,7 @@ export interface BooksByStatusDto {
 export class GetUserBooksByStatusUseCase {
   constructor(
     private readonly readingStatusRepository: IReadingStatusRepository,
-    private readonly bookRepository: IBookRepository,
-    private readonly bookLikeRepository: IBookLikeRepository
+    private readonly bookRepository: IBookRepository
   ) {}
 
   async execute(userId: string, status?: string): Promise<BooksByStatusDto[]> {
@@ -42,9 +39,8 @@ export class GetUserBooksByStatusUseCase {
 
     const bookIds = filteredStatuses.map((rs) => rs.bookId);
 
-    const [books, likesCounts, averageRatings] = await Promise.all([
+    const [books, averageRatings] = await Promise.all([
       this.bookRepository.findMany(bookIds),
-      this.bookLikeRepository.countManyByBookIds(bookIds),
       this.bookRepository.getAverageRatings(bookIds),
     ]);
 
@@ -67,7 +63,6 @@ export class GetUserBooksByStatusUseCase {
           thumbnailUrl: book.thumbnailUrl,
           language: book.language,
           status: rs.status,
-          likesCount: likesCounts[book.id] ?? 0,
           averageRating: averageRatings[book.id] || undefined,
         };
       });

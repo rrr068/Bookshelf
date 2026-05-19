@@ -15,17 +15,17 @@ model User {
   id            String   @id @default(uuid())
   email         String   @unique
   passwordHash  String   @map("password_hash")
-  username      String
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  username        String
+  goal            String?
+  favoriteBookIds String?  @map("favorite_book_ids") // JSON array of googleBooksIds
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   // リレーション
   books          Book[]
   readingStatuses ReadingStatus[]
-  reviews        Review[]
-  likes          Like[]
-  bookLikes      BookLike[]
-
+  posts          Post[]
+  postLikes      PostLike[]
   @@index([email])
   @@map("users")
 }
@@ -51,9 +51,7 @@ model Book {
   // リレーション
   creator        User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   readingStatuses ReadingStatus[]
-  reviews        Review[]
-  bookLikes      BookLike[]
-
+  posts          Post[]
   @@index([googleBooksId])
   @@index([title])
   @@index([isbn13])
@@ -82,58 +80,43 @@ model ReadingStatus {
   @@map("reading_statuses")
 }
 
-// レビューテーブル
-model Review {
+// 投稿テーブル（書籍感想）
+model Post {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   bookId    String   @map("book_id")
+  title     String
+  body      String
   rating    Int?     // 1-5（オプショナル）
-  comment   String?
+  spoiler   Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // リレーション
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  likes     Like[]
+  postLikes PostLike[]
 
-  @@unique([userId, bookId])
   @@index([bookId])
   @@index([userId])
   @@index([createdAt(sort: Desc)])
-  @@map("reviews")
+  @@map("posts")
 }
 
-// いいねテーブル（レビューへのいいね）
-model Like {
+// 投稿いいねテーブル
+model PostLike {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  reviewId  String   @map("review_id")
+  postId    String   @map("post_id")
   createdAt DateTime @default(now()) @map("created_at")
 
   // リレーション
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, reviewId])
-  @@index([reviewId])
+  @@unique([userId, postId])
+  @@index([postId])
   @@index([userId])
-  @@map("likes")
+  @@map("post_likes")
 }
 
-// 本へのいいねテーブル
-model BookLike {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  bookId    String   @map("book_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // リレーション
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, bookId])
-  @@index([bookId])
-  @@index([userId])
-  @@map("book_likes")
-}

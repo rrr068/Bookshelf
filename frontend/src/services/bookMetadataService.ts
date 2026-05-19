@@ -3,8 +3,6 @@ import { apiClient } from './api';
 export interface BookMetadata {
   googleBooksId: string;
   averageRating: number | null;
-  likesCount: number;
-  isLikedByCurrentUser: boolean;
 }
 
 /**

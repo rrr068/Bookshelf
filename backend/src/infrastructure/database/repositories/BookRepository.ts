@@ -103,18 +103,10 @@ export class BookRepository implements IBookRepository {
    * 書籍の平均評価を取得
    */
   async getAverageRating(bookId: string): Promise<number | null> {
-    const result = await this.prisma.review.aggregate({
-      where: {
-        bookId,
-        rating: {
-          not: null,
-        },
-      },
-      _avg: {
-        rating: true,
-      },
+    const result = await this.prisma.post.aggregate({
+      where: { bookId, rating: { not: null } },
+      _avg: { rating: true },
     });
-
     return result._avg.rating;
   }
 
@@ -122,7 +114,7 @@ export class BookRepository implements IBookRepository {
    * 複数の書籍の平均評価を一括取得
    */
   async getAverageRatings(bookIds: string[]): Promise<Record<string, number | null>> {
-    const results = await this.prisma.review.groupBy({
+    const results = await this.prisma.post.groupBy({
       by: ['bookId'],
       where: { bookId: { in: bookIds }, rating: { not: null } },
       _avg: { rating: true },
