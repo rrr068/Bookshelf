@@ -14,6 +14,7 @@ export function TimelinePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set());
+  const [animatingLike, setAnimatingLike] = useState<string | null>(null);
 
   // 編集状態
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -40,6 +41,8 @@ export function TimelinePage() {
   };
 
   const handleToggleLike = async (postId: string) => {
+    setAnimatingLike(postId);
+    setTimeout(() => setAnimatingLike(null), 400);
     try {
       const result = await togglePostLike(postId);
       setPosts(posts.map((p) =>
@@ -102,12 +105,12 @@ export function TimelinePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <h1
-              className="text-2xl font-bold text-gray-900 cursor-pointer"
+              className="text-2xl font-bold text-gray-900 dark:text-white cursor-pointer"
               onClick={() => navigate('/dashboard')}
             >
               📚 Bookshelf
@@ -257,13 +260,32 @@ export function TimelinePage() {
                               ネタバレ
                             </span>
                           )}
-                          <Button
-                            size="sm"
-                            variant={post.isLikedByCurrentUser ? 'default' : 'outline'}
+                          <button
                             onClick={() => handleToggleLike(post.id)}
+                            className="flex items-center gap-1.5 px-2 py-1 rounded-full transition-colors hover:bg-red-50"
                           >
-                            ❤️ {post.likesCount}
-                          </Button>
+                            <svg
+                              viewBox="0 0 24 24"
+                              className={`w-5 h-5 transition-all duration-200 ${
+                                animatingLike === post.id ? 'scale-150' : 'scale-100'
+                              } ${
+                                post.isLikedByCurrentUser
+                                  ? 'fill-red-500 stroke-red-500'
+                                  : 'fill-transparent stroke-gray-400'
+                              }`}
+                              strokeWidth={2}
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                              />
+                            </svg>
+                            <span className={`text-sm font-medium ${post.isLikedByCurrentUser ? 'text-red-500' : 'text-gray-400'}`}>
+                              {post.likesCount}
+                            </span>
+                          </button>
                         </div>
                       </div>
 

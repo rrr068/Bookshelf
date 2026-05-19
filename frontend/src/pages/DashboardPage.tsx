@@ -217,7 +217,7 @@ export function DashboardPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* 投稿モーダル */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
@@ -411,10 +411,10 @@ export function DashboardPage() {
       )}
 
       {/* ヘッダー */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">📚 Bookshelf</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">📚 Bookshelf</h1>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" onClick={openPostModal}>
                 投稿する
@@ -808,7 +808,12 @@ export function DashboardPage() {
                                 ネタバレ
                               </span>
                             )}
-                            <span className="text-sm text-gray-500">❤️ {post.likesCount}</span>
+                            <span className="flex items-center gap-1 text-sm text-red-500">
+                              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-red-500 stroke-red-500" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                              </svg>
+                              {post.likesCount}
+                            </span>
                           </div>
                         </div>
                         <p className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed line-clamp-3">{post.body}</p>
