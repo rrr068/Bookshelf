@@ -1,0 +1,48 @@
+# Fly.io configuration
+app = "bookshelf-app"
+primary_region = "nrt"  # Tokyo
+
+[build]
+  dockerfile = "Dockerfile.prod"
+  context = "."
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+
+# フロントエンドは port 80 でサーブ
+# バックエンドは port 3000 でサーブ
+[http_service]
+  internal_port = 3000
+  processes = ["app"]
+  protocol = "tcp"
+  script_checks = []
+
+  [[http_service.checks]]
+    grace_period = "5s"
+    interval = 30000
+    method = "get"
+    path = "/health"
+    protocol = "http"
+    timeout = 5000
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 3000
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+# データベース永続ボリューム
+[[mounts]]
+  source = "data"
+  destination = "/app/data"
+  initial_size = "1gb"
+
+[metrics]
+  port = 9090
