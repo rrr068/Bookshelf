@@ -1,48 +1,52 @@
-# Fly.io configuration
-app = "bookshelf-app"
-primary_region = "nrt"  # Tokyo
+# fly.toml app configuration file generated for bookshelf-app-withered-valley-8854 on 2026-05-26T23:26:56+09:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'bookshelf-app-withered-valley-8854'
+primary_region = 'nrt'
 
 [build]
-  dockerfile = "Dockerfile.prod"
-  context = "."
+  dockerfile = 'Dockerfile.prod'
 
 [env]
-  NODE_ENV = "production"
-  PORT = "3000"
+  NODE_ENV = 'production'
+  PORT = '3000'
 
-# フロントエンドは port 80 でサーブ
-# バックエンドは port 3000 でサーブ
+[[mounts]]
+  source = 'data'
+  destination = '/app/data'
+  initial_size = '1gb'
+
 [http_service]
   internal_port = 3000
-  processes = ["app"]
-  protocol = "tcp"
-  script_checks = []
+  processes = ['app']
 
   [[http_service.checks]]
-    grace_period = "5s"
-    interval = 30000
-    method = "get"
-    path = "/health"
-    protocol = "http"
-    timeout = 5000
+    interval = '30µs'
+    timeout = '5µs'
+    grace_period = '5s'
+    method = 'get'
+    path = '/health'
+    protocol = 'http'
 
 [[services]]
-  protocol = "tcp"
+  protocol = 'tcp'
   internal_port = 3000
-  processes = ["app"]
+  processes = ['app']
 
   [[services.ports]]
     port = 80
-    handlers = ["http"]
+    handlers = ['http']
+
   [[services.ports]]
     port = 443
-    handlers = ["tls", "http"]
+    handlers = ['tls', 'http']
 
-# データベース永続ボリューム
-[[mounts]]
-  source = "data"
-  destination = "/app/data"
-  initial_size = "1gb"
+[[vm]]
+  memory = '1gb'
+  cpus = 1
+  memory_mb = 1024
 
-[metrics]
+[[metrics]]
   port = 9090
